@@ -26,15 +26,15 @@ func CreateReq(r *gin.Engine) {
 		log.Fatalf("migration failed: %v", err)
 	}
 
-	r.POST("/requests", func(c *gin.Context) {
+	r.POST("/request/create", func(c *gin.Context) {
 		var req models.Request
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		if req.Title == "" || req.Creator == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "title and creator are required"})
+		if req.Key == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "key are required"})
 			return
 		}
 

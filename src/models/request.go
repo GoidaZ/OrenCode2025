@@ -1,11 +1,14 @@
 package models
 
-import "time"
+import (
+	"time"
+	"github.com/google/uuid"
+)
 
 type Request struct {
-	ID          uint      `json:"id" gorm:"primaryKey"`
-	Title       string    `json:"title" gorm:"type:varchar(200);not null"`
-	Description string    `json:"description" gorm:"type:text"`
-	Creator     string    `json:"creator" gorm:"type:varchar(100);not null"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID        uint      `json:"id" gorm:"primaryKey"`
+	Key       string    `json:"key" gorm:"type:varchar(100);unique;not null"`
+	Creator   uuid.UUID `json:"creator" gorm:"type:uuid;not null"`
+	Status    string    `json:"status" gorm:"type:varchar(20);not null"` // ACCEPT / REJECT / PENDING
+	CreatedAt time.Time `json:"created_at"`
 }
