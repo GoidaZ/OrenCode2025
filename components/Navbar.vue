@@ -1,7 +1,7 @@
 <template>
-  <div class="navbar bg-base-100 shadow-sm">
+  <div class="navbar bg-base-300/50 shadow-sm">
     <div class="flex-1">
-      <a class="btn btn-ghost text-xl">daisyUI</a>
+      <a class="btn btn-ghost text-xl">SecretManager</a>
     </div>
     <div class="flex gap-2">
       <input type="text" placeholder="Search" class="input input-bordered w-24 md:w-auto" />
@@ -29,3 +29,7 @@
     </div>
   </div>
 </template>
+
+<script setup>
+const route = useRoute()
+</script>

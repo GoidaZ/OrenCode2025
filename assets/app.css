@@ -1,2 +1,36 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+@layer base {
+    body {
+        @apply bg-base-100;
+    }
+}
+
+@layer utilities {
+    @media (max-width: 64rem) {
+        .responsive-breaks br {
+            display: none;
+        }
+    }
+
+    .menu-active {
+        @apply !bg-base-300 !shadow-lg;
+    }
+
+    .icon-xs {
+        @apply !w-3 !h-3;
+    }
+
+    .icon-sm {
+        @apply !w-4 !h-4;
+    }
+
+    .icon-md {
+        @apply !w-5 !h-5;
+    }
+
+    .icon-xl {
+        @apply !w-10 !h-10;
+    }
+}

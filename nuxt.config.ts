@@ -6,10 +6,12 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ["~/assets/app.css"],
   ssr: false,
+
   // Enables the development server to be discoverable by other devices when running on iOS physical devices
   devServer: {
     host: '127.0.0.1',
   },
+
   vite: {
     // Better support for Tauri CLI output
     clearScreen: false,
@@ -23,6 +25,9 @@ export default defineNuxtConfig({
       strictPort: true,
     },
   },
+
   // Avoids error [unhandledRejection] EMFILE: too many open files, watch
   ignore: ['**/src-tauri/**'],
+
+  modules: ['@nuxt/icon'],
 })
