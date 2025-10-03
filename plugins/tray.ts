@@ -1,4 +1,4 @@
-import {TrayIcon, type TrayIconOptions} from '@tauri-apps/api/tray';
+import { TrayIcon, type TrayIconOptions } from '@tauri-apps/api/tray';
 import { Menu } from '@tauri-apps/api/menu';
 import { defaultWindowIcon } from '@tauri-apps/api/app';
 import { getCurrentWindow } from "@tauri-apps/api/window";

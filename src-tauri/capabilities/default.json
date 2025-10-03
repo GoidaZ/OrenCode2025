@@ -17,6 +17,7 @@
     "core:app:allow-default-window-icon",
     "core:window:allow-show",
     "process:default",
-    "log:default"
+    "log:default",
+    "sql:default"
   ]
 }
