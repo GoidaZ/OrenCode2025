@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func main() {
+func CreateReq() {
 	dsn := os.Getenv("DATABASE_DSN")
 	if dsn == "" {
 		log.Fatal("DATABASE_DSN env is required")
@@ -46,9 +46,4 @@ func main() {
 
 		c.JSON(http.StatusCreated, req)
 	})
-
-	log.Println("Server started at :8080")
-	if err := r.Run(":8080"); err != nil {
-		log.Fatal(err)
-	}
 }
