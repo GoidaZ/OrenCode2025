@@ -18,6 +18,7 @@
     "core:window:allow-show",
     "process:default",
     "log:default",
-    "sql:default"
+    "sql:default",
+    "notification:default"
   ]
 }
