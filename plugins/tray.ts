@@ -29,6 +29,7 @@ export default defineNuxtPlugin(async (app) => {
 
     const options: TrayIconOptions = {
         menu,
+        showMenuOnLeftClick: false,
         icon: await defaultWindowIcon() || undefined,
         title: "SecretManager",
         action: async (event) => {
