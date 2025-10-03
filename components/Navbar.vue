@@ -1,12 +1,10 @@
 <template>
   <div class="navbar bg-base-300/50 shadow-sm">
-    <div class="flex-none">
+    <div class="flex-none" :class="{'!flex-1': route.path !== '/'}">
       <NuxtLink to="/" class="btn btn-ghost text-xl">SecretManager</NuxtLink>
     </div>
-    <div class="flex grow">
-      <div v-if="route.path === '/'">
-        <input type="text" placeholder="Поиск секретов..." class="input input-bordered w-full m-auto max-w-150" />
-      </div>
+    <div class="flex grow" v-if="route.path === '/'">
+      <input type="text" placeholder="Поиск секретов..." class="input input-bordered w-full m-auto max-w-150" />
     </div>
     <div class="flex-none gap-2">
       <div class="dropdown dropdown-end">
