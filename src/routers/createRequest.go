@@ -1,4 +1,4 @@
-package main
+package routers
 
 import (
 	"log"
@@ -8,9 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"orencode/src/models"
 )
 
-func CreateReq() {
+func CreateReq(r *gin.Engine) {
 	dsn := os.Getenv("DATABASE_DSN")
 	if dsn == "" {
 		log.Fatal("DATABASE_DSN env is required")
@@ -21,14 +22,12 @@ func CreateReq() {
 		log.Fatalf("failed to connect database: %v", err)
 	}
 
-	if err := db.AutoMigrate(&Request{}); err != nil {
+	if err := db.AutoMigrate(&models.Request{}); err != nil {
 		log.Fatalf("migration failed: %v", err)
 	}
 
-	r := gin.Default()
-
 	r.POST("/requests", func(c *gin.Context) {
-		var req Request
+		var req models.Request
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
