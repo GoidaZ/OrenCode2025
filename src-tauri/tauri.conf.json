@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "secretmanager",
+        "title": "SecretManager",
         "width": 800,
         "height": 600
       }
