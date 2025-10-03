@@ -1,5 +1,5 @@
 <template>
-  <div class="navbar bg-base-300/50 shadow-sm">
+  <div class="navbar bg-base-200 shadow-sm backdrop-blur-md sticky z-100 top-0 p-0 px-1">
     <div class="flex-none" :class="{'!flex-1': route.path !== '/'}">
       <NuxtLink to="/" class="btn btn-ghost text-xl">SecretManager</NuxtLink>
     </div>
