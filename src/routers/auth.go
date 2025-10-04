@@ -19,7 +19,7 @@ type UserClaims struct {
 	Name              string `json:"name"`
 }
 
-var (
+var ( // TODO: Go .env
 	realmURL     = "http://localhost:8080/realms/test"
 	clientID     = "backend"
 	clientSecret = "HZ7KVvK2qtecvr0YwC8fmFbFDFEzK9iY"

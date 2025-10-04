@@ -1,31 +1,14 @@
 package routers
 
 import (
-	"log"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 	"orencode/src/models"
+	"gorm.io/gorm"
 )
 
-func CreateReq(r *gin.Engine) {
-	dsn := os.Getenv("DATABASE_DSN")
-	if dsn == "" {
-		log.Fatal("DATABASE_DSN env is required")
-	}
-
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatalf("failed to connect database: %v", err)
-	}
-
-	if err := db.AutoMigrate(&models.Request{}); err != nil {
-		log.Fatalf("migration failed: %v", err)
-	}
-
+func CreateReq(r *gin.Engine, db *gorm.DB) {
 	// TODO: Распределить права
 
 	r.POST("/request/create", func(c *gin.Context) {
