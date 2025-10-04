@@ -34,7 +34,7 @@ const {
   data: key,
   error,
   refresh,
-} = await useFetch<IKeyDetail>("http://localhost:8000/key/get", {
+} = await useApiFetch<IKeyDetail>("/key/get", {
   params: {
     id: useRoute().params.id,
   },
