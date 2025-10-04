@@ -37,9 +37,8 @@ services:
       PORT: '8000'
       DATABASE_DSN: 'host=postgres user=admin password=admin dbname=secretmanager port=5432 sslmode=disable'
       AUTH_REALM_URL: "http://keycloak:8080/realms/secretmanager"
-      AUTH_CLIENT_ID: "secretmanager"
-      AUTH_CLIENT_SECRET: "HZ7KVvK2qtecvr0YwC8fmFbFDFEzK9iY"
-      AUTH_REDIRECT_URL: "secretmanager://callback"
+      AUTH_CLIENT_ID: "backend"
+      AUTH_CLIENT_SECRET: "qSjlRfGamv70qVfNmkangXBaJ6BBZMn0"
     networks:
       - network
     depends_on:

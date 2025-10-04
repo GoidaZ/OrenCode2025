@@ -29,7 +29,7 @@ initialize "auth" {
       default_role = "default"
     }
   }
-  request "create-oidc-role" {
+  request "create-oidc-role-default" {
     operation = "create"
     path = "auth/keycloak/role/default"
     data = {
@@ -39,6 +39,16 @@ initialize "auth" {
       ]
       policies = "per-user"
       ttl = "1h"
+    }
+  }
+  request "create-oidc-role-backend" {
+    operation = "create"
+    path = "auth/keycloak/role/backend"
+    data = {
+      user_claim = "client_id"
+      allowed_redirect_uris = []
+      policies = "backend"
+      ttl = "24h"
     }
   }
 }
@@ -70,6 +80,22 @@ path "secrets/data/users/{{identity.entity.aliases.keycloak.name}}/*" {
 
 # Allow full access to metadata for their own secrets
 path "secrets/metadata/users/{{identity.entity.aliases.keycloak.name}}/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+EOT
+    }
+  }
+  request "create-backend" {
+    operation = "create"
+    path = "sys/policies/acl/backend"
+    data = {
+      policy = <<EOT
+# Backend can manage all user secrets
+path "secrets/data/users/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+path "secrets/metadata/users/*" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
 EOT
