@@ -8,7 +8,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o server ./main.go
+RUN go build -o server ./src/main.go
 
 FROM debian:bookworm-slim
 
