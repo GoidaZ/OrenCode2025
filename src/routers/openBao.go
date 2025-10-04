@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"net/http"
+	"orencode/src/models"
 )
 
 func OpenBao(r *gin.Engine, db *gorm.DB) {
@@ -21,15 +22,28 @@ func OpenBao(r *gin.Engine, db *gorm.DB) {
 
 	client.SetToken("foobar") // TODO: Go .env
 
-	//  GET /key/get?path=secret/data/mykey
+	r.GET("/key/list", func(c *gin.Context) {
+		var requests []models.Request
+
+		creatorID := "058f1f46-8a10-4887-a185-29938ab8c3cb"
+
+		if err := db.Where("creator = ?", creatorID).Find(&requests).Error; err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(200, requests)
+	})
+
+	//  GET /key/id?path=mykey
 	r.GET("/key/get", func(c *gin.Context) {
-		path := c.Query("path")
+		path := c.Query("id")
 		if path == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "missing query param: path"})
 			return
 		}
 
-		secret, err := client.Logical().Read(path)
+		secret, err := client.Logical().Read("secret/data/" + path)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read key", "details": err.Error()})
 			return
@@ -41,12 +55,12 @@ func OpenBao(r *gin.Engine, db *gorm.DB) {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"path":   path,
-			"data":   secret.Data,
-			"wrap":   secret.WrapInfo,
-			"lease":  secret.LeaseDuration,
-			"renew":  secret.Renewable,
-			"auth":   secret.Auth,
+			"path":  path,
+			"data":  secret.Data,
+			"wrap":  secret.WrapInfo,
+			"lease": secret.LeaseDuration,
+			"renew": secret.Renewable,
+			"auth":  secret.Auth,
 		})
 	})
 }
