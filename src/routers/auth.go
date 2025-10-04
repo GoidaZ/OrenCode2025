@@ -23,7 +23,7 @@ var ( // TODO: Go .env
 	realmURL     = "http://localhost:8080/realms/test"
 	clientID     = "backend"
 	clientSecret = "HZ7KVvK2qtecvr0YwC8fmFbFDFEzK9iY"
-	redirectURI  = "http://localhost:8000/auth/callback"
+	redirectURI  = "http://localhost:3000/auth"
 )
 
 func ValidationKeycloak(r *gin.Engine) gin.HandlerFunc {
@@ -59,7 +59,7 @@ func ValidationKeycloak(r *gin.Engine) gin.HandlerFunc {
 		c.Next()
 	}
 
-	r.GET("/me", authMiddleware, func(c *gin.Context) {
+	r.GET("/auth/me", authMiddleware, func(c *gin.Context) {
 		user, exists := c.Get("user")
 		if !exists {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
@@ -68,10 +68,7 @@ func ValidationKeycloak(r *gin.Engine) gin.HandlerFunc {
 
 		claims := user.(UserClaims)
 
-		c.JSON(200, gin.H{
-			"msg":  "access allowed",
-			"user": claims,
-		})
+		c.JSON(200, claims)
 	})
 
 	r.GET("/auth/callback", func(c *gin.Context) {
