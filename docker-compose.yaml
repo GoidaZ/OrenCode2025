@@ -60,8 +60,19 @@ services:
     image: openbao/openbao
     environment:
       BAO_DEV_ROOT_TOKEN_ID: 'foobar'
+
+      KEYCLOAK_CLIENT_ID: 'backend'
+      KEYCLOAK_CLIENT_SECRET: 'HZ7KVvK2qtecvr0YwC8fmFbFDFEzK9iY'
+      KEYCLOAK_PUBLIC_URL: 'keycloak:8080'
+      KEYCLOAK_REALM: 'test'
     networks:
       - network
+    command: >
+      bao write auth/oidc/config
+      oidc_client_id="${KEYCLOAK_CLIENT_ID}"
+      oidc_client_secret="${KEYCLOAK_CLIENT_SECRET}"
+      oidc_discovery_url="https://${KEYCLOAK_PUBLIC_URL}/auth/realms/${KEYCLOAK_REALM}"
+    
 
 volumes:
   postgres_db_data:
