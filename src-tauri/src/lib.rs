@@ -1,8 +1,6 @@
-use serde_json::json;
 use tauri::{Manager, RunEvent};
 use tauri_plugin_log::log;
 use tauri_plugin_sql::{Migration, MigrationKind};
-use tauri_plugin_store::StoreExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -22,12 +20,6 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_store::Builder::default().build())
-        .setup(|app| {
-            let store = app.store("settings.json")?;
-            store.set("api_base", json!("http://localhost:5859"));
-            store.save()?;
-            Ok(())
-        })
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             let _ = app
@@ -60,12 +52,11 @@ pub fn run() {
                 label,
                 ..
             } => {
-                api.prevent_close();
-                _app_handle
-                    .get_webview_window(&label)
-                    .unwrap()
-                    .hide()
-                    .unwrap();
+                let window = _app_handle.get_webview_window(&label).unwrap();
+                if window.label() == "main" {
+                    api.prevent_close();
+                    window.hide().unwrap();
+                }
             }
             _ => (),
         }

@@ -12,11 +12,17 @@
         <span class="text-white">Автозагрузка</span>
       </label>
     </div>
+    <div class="mt-2">
+      <button class="btn btn-error" @click="deleteExisting">Удалить кошелек</button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
+import { ask } from "@tauri-apps/plugin-dialog";
+
+const { reset } = await useVault();
 const { settings } = await useSettings();
 
 const autostart = ref(false);
@@ -24,6 +30,18 @@ const autostart = ref(false);
 onMounted(async () => {
   autostart.value = await isEnabled();
 });
+
+async function deleteExisting() {
+  const answer = await ask(
+      'Вы уверены, что хотите удалить свой кошелек?\nЭто действие нельзя отменить.',
+      { title: 'SecretManager', kind: 'warning', cancelLabel: 'Отменить', okLabel: 'Удалить' }
+  );
+
+  if (answer) {
+    await reset();
+    await navigateTo('/');
+  }
+}
 
 watch(autostart, async (value) => {
   if (value) {

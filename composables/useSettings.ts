@@ -2,25 +2,31 @@ import { load, Store } from '@tauri-apps/plugin-store';
 import { reactive, watch } from 'vue';
 
 type Settings = {
-  api_base?: string;
+  apiBase: string;
   salt?: string;
   verifier?: string;
+
   [key: string]: any;
 };
 
-let initialized = false;
 let storeRef: Store;
 
 export async function useSettings() {
-  if (!initialized) {
-    initialized = true;
+  if (!storeRef) {
     storeRef = await load('settings.json');
   }
 
   const entries = await storeRef.entries();
-  const plainSettings: Settings = Object.fromEntries(entries);
+  const defaultSettings: Settings = {
+    apiBase: 'http://localhost:5859'
+  };
 
-  const settings = reactive<Settings>(plainSettings);
+  const plainSettings = Object.fromEntries(entries) as Record<string, unknown>;
+
+  const settings = reactive<Settings>({
+    ...defaultSettings,
+    ...plainSettings,
+  });
 
   watch(
     settings,

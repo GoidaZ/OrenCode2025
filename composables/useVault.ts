@@ -101,6 +101,10 @@ export default async function useVault() {
     return false;
   }
 
+  async function refresh() {
+    secrets.value = await listSecrets();
+  }
+
   async function verifyPassword(masterPassword: string): Promise<boolean> {
     const salt = base64ToUint8Array(settings.salt || '');
     const tmpKey = await deriveKey(masterPassword, salt);
@@ -127,7 +131,7 @@ export default async function useVault() {
     }
   }
 
-  async function encryptSecret(plaintext: string) {
+  async function encryptSecret(plaintext: Record<string, string>) {
     if (!key.value) throw new Error('Unlock vault first');
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const nonce = crypto.getRandomValues(new Uint8Array(12));
@@ -135,7 +139,7 @@ export default async function useVault() {
     const ciphertext = await crypto.subtle.encrypt(
       { name: 'AES-GCM', iv: nonce },
       key.value,
-      encoder.encode(plaintext)
+      encoder.encode(JSON.stringify(plaintext))
     );
 
     return {
@@ -155,10 +159,13 @@ export default async function useVault() {
       key.value,
       ciphertext
     );
-    return decoder.decode(decrypted);
+    return JSON.parse(decoder.decode(decrypted)) as Record<string, string>;
   }
 
-  async function addSecret(id: string, description: string, plaintext: string, expiresAt?: Date | null) {
+  async function addSecret(id: string, description: string, plaintext: Record<string, string>, expiresAt?: Date | null) {
+    const existing = await db?.select<SecretRecord[]>('SELECT id FROM secrets WHERE id = ?', [id]);
+    if (existing && existing.length > 0) throw new Error(`Secret with ID "${id}" already exists`);
+
     const enc = await encryptSecret(plaintext);
 
     await db?.execute(
@@ -176,7 +183,7 @@ export default async function useVault() {
     return id;
   }
 
-  async function getSecret(id: string): Promise<string | null> {
+  async function getSecret(id: string): Promise<Record<string, string> | null> {
     const result = await db?.select<SecretRecord[]>('SELECT * FROM secrets WHERE id = ?', [id]);
     if (!result || result.length === 0) return null;
 
@@ -195,7 +202,15 @@ export default async function useVault() {
     const results = await db?.select<SecretRecord[]>(
       'SELECT id, description, created_at, expires_at FROM secrets'
     );
-    return results || [];
+
+    if (!results) return [];
+
+    return results.map(r => ({
+      id: r.id,
+      description: r.description,
+      created_at: r.created_at ? new Date(r.created_at) : undefined,
+      expires_at: r.expires_at ? new Date(r.expires_at) : null,
+    }));
   }
 
   async function reset(): Promise<void> {
@@ -212,6 +227,7 @@ export default async function useVault() {
     reset,
     exists,
     secrets,
+    refresh,
     verifyPassword,
     addSecret,
     getSecret,

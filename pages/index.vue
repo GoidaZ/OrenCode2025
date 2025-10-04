@@ -19,10 +19,10 @@
             </button>
           </div>
         </fieldset>
-        <fieldset class="fieldset mb-0">
-          <button class="btn btn-primary w-full" @click="loadExisting">Открыть кошелек</button>
-          <button class="btn btn-error w-full" @click="deleteExisting">Удалить кошелек</button>
-        </fieldset>
+        <div class="flex gap-2">
+          <button class="btn btn-primary flex-1" @click="loadExisting">Открыть</button>
+          <button class="btn btn-error flex-1" @click="deleteExisting">Удалить</button>
+        </div>
       </div>
       <div class="space-y-4" v-else>
         <fieldset class="fieldset text-sm mb-0">

@@ -14,8 +14,8 @@
     "windows": [
       {
         "title": "SecretManager",
-        "width": 800,
-        "height": 600
+        "minWidth": 1200,
+        "minHeight": 800
       }
     ],
     "security": {
