@@ -10,6 +10,7 @@ import (
 
 	"github.com/coreos/go-oidc"
 	"github.com/gin-gonic/gin"
+	"os"
 )
 
 type UserClaims struct {
@@ -20,10 +21,10 @@ type UserClaims struct {
 }
 
 var ( // TODO: Go .env
-	realmURL     = "http://localhost:8080/realms/test"
-	clientID     = "backend"
-	clientSecret = "HZ7KVvK2qtecvr0YwC8fmFbFDFEzK9iY"
-	redirectURI  = "http://localhost:3000/auth"
+	realmURL     = os.Getenv("AUTH_REALM_URL")
+	clientID     = os.Getenv("AUTH_CLIENT_ID")
+	clientSecret = os.Getenv("AUTH_CLIENT_SECRET")
+	redirectURI  = os.Getenv("AUTH_REDIRECT_URL")
 )
 
 func ValidationKeycloak(r *gin.Engine) gin.HandlerFunc {
