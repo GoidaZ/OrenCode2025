@@ -23,7 +23,7 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .setup(|app| {
             let store = app.store("settings.json")?;
-            store.set("api_base", json!("http://localhost:8000"));
+            store.set("api_base", json!("http://localhost:5859"));
             store.save()?;
             Ok(())
         })
