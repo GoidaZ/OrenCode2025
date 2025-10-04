@@ -1,0 +1,8 @@
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/GoidaZ/OrenCode2025
+	branch = frontend
+[submodule "backend"]
+	path = backend
+	url = https://github.com/GoidaZ/OrenCode2025
+	branch = backend
