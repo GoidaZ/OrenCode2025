@@ -1,0 +1,13 @@
+{
+  "realm": "test",
+  "enabled": true,
+  "clients": [
+    {
+      "clientId": "backend",
+      "secret": "HZ7KVvK2qtecvr0YwC8fmFbFDFEzK9iY",
+      "redirectUris": ["http://localhost:3000/auth"],
+      "publicClient": false,
+      "protocol": "openid-connect"
+    }
+  ]
+}
