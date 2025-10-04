@@ -1,14 +1,38 @@
+use serde_json::json;
 use tauri::{Manager, RunEvent};
-
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+use tauri_plugin_log::log;
+use tauri_plugin_sql::{Migration, MigrationKind};
+use tauri_plugin_store::StoreExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let migrations = vec![
+        Migration {
+            version: 1,
+            description: "create_initial_tables",
+            sql: include_str!("../init.sql"),
+            kind: MigrationKind::Up,
+        }
+    ];
+
     let app = tauri::Builder::default()
+        .plugin(tauri_plugin_log::Builder::new()
+            .level(log::LevelFilter::Info)
+            .build())
+        .plugin(tauri_plugin_store::Builder::default().build())
+        .setup(|app| {
+            let store = app.store("settings.json")?;
+            store.set("api_base", json!("http://localhost:5859"));
+            store.save()?;
+
+            let salt_path = app.handle()
+                .path().app_data_dir()
+                .expect("could not resolve app local data path")
+                .join("salt.txt");
+            app.handle().plugin(tauri_plugin_stronghold::Builder::with_argon2(&salt_path).build())?;
+
+            Ok(())
+        })
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             let _ = app
@@ -17,11 +41,11 @@ pub fn run() {
                 .set_focus();
         }))
         .plugin(tauri_plugin_autostart::Builder::new().build())
-        .plugin(tauri_plugin_sql::Builder::new().build())
-        .plugin(tauri_plugin_log::Builder::new().build())
+        .plugin(tauri_plugin_sql::Builder::default()
+            .add_migrations("sqlite:main.db", migrations)
+            .build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
         .build(tauri::generate_context!())
         .expect("error while running tauri application");
 

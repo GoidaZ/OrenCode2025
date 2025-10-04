@@ -4,7 +4,7 @@
     <div class="divider my-2"></div>
     <fieldset class="fieldset text-sm pb-3">
       <legend class="fieldset-legend">URL сервера</legend>
-      <input type="text" class="input" placeholder="https://127.0.0.1:5859" />
+      <input type="text" class="input" placeholder="https://127.0.0.1:5859" v-model="settings.api_base" />
     </fieldset>
     <div class="form-control">
       <label class="label cursor-pointer input-md">
@@ -17,6 +17,7 @@
 
 <script setup lang="ts">
 import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
+const { settings } = await useSettings();
 
 const autostart = ref(false);
 
