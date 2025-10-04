@@ -33,11 +33,6 @@ import {
 import { NavMain } from "./nav-main";
 
 const data = {
-  user: {
-    name: "Иван",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navSecondary: [
     // {
     //   title: "Настройки",
@@ -77,7 +72,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   );

@@ -9,5 +9,15 @@ const options: CreateAxiosDefaults = {
 }
 
 const axiosClassic = axios.create(options)
+const axiosAuth = axios.create(options)
 
-export { axiosClassic }
+axiosAuth.interceptors.request.use((config) => {
+    config.headers = config.headers ?? {}
+    const accessToken = localStorage.getItem('token') //TODO: Переписать
+    if (accessToken) {
+        config.headers.Authorization = `Bearer ${accessToken}`
+    }
+    return config
+})
+
+export { axiosClassic, axiosAuth }
