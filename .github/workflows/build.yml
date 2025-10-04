@@ -2,6 +2,8 @@ name: Build docker
 
 on:
   workflow_dispatch:
+  push:
+
 
 env:
   REGISTRY: cr.selcloud.ru
@@ -31,7 +33,8 @@ jobs:
       with:
         registry: ${{ env.REGISTRY }}
         username: token
-        password: ${{secrets.SELECTEL_TOKEN}}
+        password: CRgAAAAA8bIK7ORX0AaGcUXNwEWHUrMKEUB4pWKq 
+        # TODO: Закинь потом в .env github secrets
 
     - uses: docker/build-push-action@master
       with:
