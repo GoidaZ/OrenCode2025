@@ -5,39 +5,41 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
     ports:
-      - "80:80"
+      - "5859:80"
     networks:
       - network
     depends_on:
       - keycloak
-      - openBao
-      - backend-main
+      - openbao
+      - backend
 
-  postgres-db:
+  postgres:
     image: postgres:18
     environment:
-      POSTGRES_DB: 'backend'
-      POSTGRES_USER: 'backend-user'
-      POSTGRES_PASSWORD: 'backend-password'
+      POSTGRES_DB: secretmanager
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
     volumes:
       - postgres_db_data:/var/lib/postgresql/data
     networks:
       - network
 
-  frontend-main:
-    image: cr.selcloud.ru/oren2025/frontend:latest
+  frontend:
+    build:
+      context: ./frontend/
     networks:
       - network
 
-  backend-main:
-    image: cr.selcloud.ru/oren2025/backend:latest
+  backend:
+    build:
+      context: ./backend/
     environment:
       PORT: '8000'
-      DATABASE_DSN: 'host=postgres-db user=backend-user password=backend-password dbname=backend port=5432 sslmode=disable'
-      AUTH_REALM_URL: "http://keycloak:8080/realms/test"
-      AUTH_CLIENT_ID: "backend"
+      DATABASE_DSN: 'host=postgres user=admin password=admin dbname=secretmanager port=5432 sslmode=disable'
+      AUTH_REALM_URL: "http://keycloak:8080/realms/secretmanager"
+      AUTH_CLIENT_ID: "secretmanager"
       AUTH_CLIENT_SECRET: "HZ7KVvK2qtecvr0YwC8fmFbFDFEzK9iY"
-      AUTH_REDIRECT_URL: "http://localhost:3000/auth"
+      AUTH_REDIRECT_URL: "secretmanager://callback"
     networks:
       - network
     depends_on:
@@ -51,28 +53,20 @@ services:
     networks:
       - network
     volumes:
-      - ./realm-keycloak.json:/opt/keycloak/data/import/realm-export.json
+      - ./keycloak/secretmanager-realm.json:/opt/keycloak/data/import/secretmanager-realm.json
+    ports:
+      - "5858:8080"
     command:
-      - start-dev
+      - start
       - --import-realm
+      - --http-enabled true
   
-  openBao:
+  openbao:
     image: openbao/openbao
-    environment:
-      BAO_DEV_ROOT_TOKEN_ID: 'foobar'
-
-      KEYCLOAK_CLIENT_ID: 'backend'
-      KEYCLOAK_CLIENT_SECRET: 'HZ7KVvK2qtecvr0YwC8fmFbFDFEzK9iY'
-      KEYCLOAK_PUBLIC_URL: 'keycloak:8080'
-      KEYCLOAK_REALM: 'test'
+    volumes:
+      - ./openbao/config.hcl:/openbao/config
     networks:
       - network
-    command: >
-      bao write auth/oidc/config
-      oidc_client_id="${KEYCLOAK_CLIENT_ID}"
-      oidc_client_secret="${KEYCLOAK_CLIENT_SECRET}"
-      oidc_discovery_url="https://${KEYCLOAK_PUBLIC_URL}/auth/realms/${KEYCLOAK_REALM}"
-    
 
 volumes:
   postgres_db_data:
