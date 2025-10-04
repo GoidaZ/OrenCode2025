@@ -6,14 +6,15 @@ export type SecretRecord = {
   value: string;
   nonce: string;
   salt: string;
-  created_at?: string;
-  expires_at?: string | null;
+  created_at?: Date;
+  expires_at?: Date | null;
 };
 
 export default async function useVault() {
   const db = await useDatabase();
   const { settings } = await useSettings();
   const key = useState("vault_key", () => null as CryptoKey | null)
+  const secrets = useState<Omit<SecretRecord, 'value' | 'nonce' | 'salt'>[]>('vault_secrets', () => []);
 
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
@@ -92,6 +93,15 @@ export default async function useVault() {
   }
 
   async function unlockExisting(masterPassword: string): Promise<boolean> {
+    if (await verifyPassword(masterPassword)) {
+      secrets.value = await listSecrets();
+      return true;
+    }
+
+    return false;
+  }
+
+  async function verifyPassword(masterPassword: string): Promise<boolean> {
     const salt = base64ToUint8Array(settings.salt || '');
     const tmpKey = await deriveKey(masterPassword, salt);
 
@@ -137,7 +147,6 @@ export default async function useVault() {
 
   async function decryptSecret(record: SecretRecord) {
     if (!key.value) throw new Error('Unlock vault first');
-    const salt = base64ToUint8Array(record.salt);
     const nonce = base64ToUint8Array(record.nonce);
     const ciphertext = base64ToUint8Array(record.value);
 
@@ -149,14 +158,20 @@ export default async function useVault() {
     return decoder.decode(decrypted);
   }
 
-  async function addSecret(description: string, plaintext: string, expiresAt?: string | null) {
+  async function addSecret(id: string, description: string, plaintext: string, expiresAt?: Date | null) {
     const enc = await encryptSecret(plaintext);
-    const id = crypto.randomUUID();
 
     await db?.execute(
       'INSERT INTO secrets (id, description, value, nonce, salt, created_at, expires_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)',
       [id, description, enc.value, enc.nonce, enc.salt, expiresAt]
     );
+
+    secrets.value.push({
+      id,
+      description,
+      created_at: new Date(),
+      expires_at: expiresAt || null,
+    });
 
     return id;
   }
@@ -168,19 +183,26 @@ export default async function useVault() {
     const record = result[0];
     if (!record) return null;
 
-    if (record.expires_at && new Date() > new Date(record.expires_at)) throw new Error('Secret has expired');
-
     return decryptSecret(record);
   }
 
   async function removeSecret(id: string): Promise<void> {
     await db?.execute('DELETE FROM secrets WHERE id = ?', [id]);
+    secrets.value = secrets.value.filter(s => s.id !== id);
+  }
+
+  async function listSecrets(): Promise<Omit<SecretRecord, 'value' | 'nonce' | 'salt'>[]> {
+    const results = await db?.select<SecretRecord[]>(
+      'SELECT id, description, created_at, expires_at FROM secrets'
+    );
+    return results || [];
   }
 
   async function reset(): Promise<void> {
     await db?.execute('DELETE FROM secrets');
     settings.salt = undefined;
     settings.verifier = undefined;
+    secrets.value = [];
     lock();
   }
 
@@ -189,6 +211,8 @@ export default async function useVault() {
     lock,
     reset,
     exists,
+    secrets,
+    verifyPassword,
     addSecret,
     getSecret,
     removeSecret

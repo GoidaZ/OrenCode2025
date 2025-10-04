@@ -5,6 +5,8 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { exit } from '@tauri-apps/plugin-process';
 
 export default defineNuxtPlugin(async (app) => {
+    if (getCurrentWindow().label !== 'main') return;
+
     const menu = await Menu.new({
         items: [
             {
