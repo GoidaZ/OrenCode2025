@@ -1,7 +1,7 @@
 FROM node:22-alpine AS deps
 WORKDIR /home/app
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile --production
+RUN yarn install --frozen-lockfile
 
 FROM node:22-alpine AS build
 WORKDIR /home/app
