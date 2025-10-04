@@ -101,7 +101,6 @@ import { message } from "@tauri-apps/plugin-dialog";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { emit } from '@tauri-apps/api/event';
 
-const router = useRouter()
 const { addSecret, unlock } = await useVault()
 
 // Form fields
