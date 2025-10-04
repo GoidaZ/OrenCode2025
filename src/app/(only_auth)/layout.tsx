@@ -1,4 +1,3 @@
-"use client";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AuthGuard } from "@/hooks/auth-guard";

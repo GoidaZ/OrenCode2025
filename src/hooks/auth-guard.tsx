@@ -1,8 +1,7 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { toast } from "sonner";
 import { useAuth } from "./use-auth";
 import { Spinner } from "@/components/ui/spinner";
 
