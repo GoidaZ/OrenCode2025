@@ -1,4 +1,5 @@
-import { warn, debug, trace, info, error } from '@tauri-apps/plugin-log';
+import { warn, debug, info, error } from '@tauri-apps/plugin-log';
+import { stringify } from 'flatted';
 
 export default defineNuxtPlugin((app) => {
     function forwardConsole(
@@ -14,7 +15,11 @@ export default defineNuxtPlugin((app) => {
                 .map((arg) => {
                     if (typeof arg === 'string') return arg;
                     if (arg instanceof Error) return arg.stack || arg.message;
-                    return JSON.stringify(arg);
+                    try {
+                        return stringify(arg);
+                    } catch {
+                        return '[Unable to serialize object]';
+                    }
                 })
                 .join(' ');
 

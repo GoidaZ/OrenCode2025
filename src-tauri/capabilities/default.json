@@ -19,7 +19,18 @@
     "process:default",
     "log:default",
     "sql:default",
+    "sql:allow-execute",
     "notification:default",
-    "store:default"
+    "store:default",
+    "dialog:default",
+    "fs:default",
+    {
+      "identifier": "fs:allow-read-dir",
+      "allow": [{ "path": "$APPDATA" }, { "path": "$APPDATA/*" }]
+    },
+    {
+      "identifier": "fs:allow-remove",
+      "allow": [{ "path": "$APPDATA" }, { "path": "$APPDATA/*" }]
+    }
   ]
 }

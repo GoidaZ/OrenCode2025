@@ -1,68 +1,134 @@
 <template>
-  <div class="px-4 pt-2 pb-4">
-    <table class="table">
-      <thead>
-      <tr>
-        <th>ID</th>
-        <th>Описание</th>
-        <th class="w-full text-right">
-          <button class="btn btn-sm btn-accent btn-outline w-26">
-            Добавить <Icon name="fa6-solid:plus" class="icon-sm"/>
-          </button>
-        </th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr class="whitespace-nowrap" v-for="(secret, index) in secrets">
-        <td>
-          <code>{{ secret.id }}</code>
-        </td>
-        <td>
-          {{ secret.description }}
-        </td>
-        <th class="w-full text-right">
-          <div class="join">
-            <button class="join-item btn btn-sm btn-primary btn-outline">
-              <Icon name="fa6-solid:eye" class="icon-xs"/>
-            </button>
-            <button class="join-item btn btn-sm btn-error btn-outline">
-              <Icon name="fa6-solid:trash" class="icon-xs"/>
+  <div class="flex min-h-screen items-center justify-center bg-base-200">
+    <div class="card w-full max-w-sm shadow-xl bg-base-100 p-6">
+      <h2 class="text-4xl font-bold text-center mb-4">🔐 SecretManager</h2>
+      <div class="space-y-4" v-if="!isNewVault">
+        <fieldset class="fieldset text-sm">
+          <legend class="fieldset-legend">Введите мастер-пароль:</legend>
+          <div class="join w-full">
+            <input :type="showPassword ? 'text' : 'password'"
+                   class="input input-bordered join-item"
+                   placeholder="12345"
+                   v-model="password" />
+            <button
+                type="button"
+                class="btn btn-soft join-item"
+                @click="togglePassword"
+            >
+              <Icon :name="showPassword ? 'fa6-solid:eye-slash' : 'fa6-solid:eye'" class="icon-md" />
             </button>
           </div>
-        </th>
-      </tr>
-      </tbody>
-    </table>
-    <button class="btn btn-primary" @click="notify">Тест уведомления</button>
+        </fieldset>
+        <fieldset class="fieldset mb-0">
+          <button class="btn btn-primary w-full" @click="loadExisting">Открыть кошелек</button>
+          <button class="btn btn-error w-full" @click="deleteExisting">Удалить кошелек</button>
+        </fieldset>
+      </div>
+      <div class="space-y-4" v-else>
+        <fieldset class="fieldset text-sm mb-0">
+          <legend class="fieldset-legend">Придумайте новый мастер-пароль:</legend>
+          <div class="join w-full">
+            <input :type="showPassword ? 'text' : 'password'"
+                   class="input input-bordered join-item"
+                   placeholder="12345"
+                   v-model="password" />
+            <button
+                type="button"
+                class="btn btn-soft join-item"
+                @click="togglePassword"
+            >
+              <Icon :name="showPassword ? 'fa6-solid:eye-slash' : 'fa6-solid:eye'" class="icon-md" />
+            </button>
+          </div>
+        </fieldset>
+        <fieldset class="fieldset text-sm">
+          <legend class="fieldset-legend">Подтвердите новый мастер-пароль:</legend>
+          <div class="join w-full">
+            <input :type="showPasswordConfirm ? 'text' : 'password'"
+                   class="input input-bordered join-item"
+                   placeholder="12345"
+                   v-model="passwordConfirm" />
+            <button
+                type="button"
+                class="btn btn-soft join-item"
+                @click="togglePasswordConfirm"
+            >
+              <Icon :name="showPasswordConfirm ? 'fa6-solid:eye-slash' : 'fa6-solid:eye'" class="icon-md" />
+            </button>
+          </div>
+        </fieldset>
+        <fieldset class="fieldset mb-0">
+          <button class="btn btn-primary w-full" @click="loadNew">Создать кошелек</button>
+        </fieldset>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { sendNotification } from '@tauri-apps/plugin-notification';
+import { ask, message } from '@tauri-apps/plugin-dialog';
 
-const secrets = [
-  {"id": "test-0", "description": "Test 1"},
-  {"id": "test-1", "description": "Test 2"},
-  {"id": "test-2", "description": "Test 3"},
-  {"id": "test-3", "description": "Test 4"},
-  {"id": "test-4", "description": "Test 5"},
-  {"id": "test-5", "description": "Test 6"},
-  {"id": "test-6", "description": "Test 7"},
-  {"id": "test-7", "description": "Test 8"},
-  {"id": "test-8", "description": "Test 9"},
-  {"id": "test-9", "description": "Test 10"},
-  {"id": "test-10", "description": "Test 11"},
-  {"id": "test-11", "description": "Test 12"},
-  {"id": "test-12", "description": "Test 13"},
-  {"id": "test-13", "description": "Test 14"},
-  {"id": "test-14", "description": "Test 15"},
-  {"id": "test-15", "description": "Test 16"}
-]
+const { unlock, reset, exists } = await useVault();
+const isNewVault = ref(!exists());
 
-const notify = () => {
-  sendNotification({
-    title: 'SecretManager',
-    body: 'ГОЙДА ZZZ ZOV 🇷🇺🇷🇺',
-  });
-};
+const password = ref('')
+const passwordConfirm = ref('')
+
+const showPassword = ref(false)
+const showPasswordConfirm = ref(false)
+
+function togglePassword() {
+  showPassword.value = !showPassword.value
+}
+
+function togglePasswordConfirm() {
+  showPasswordConfirm.value = !showPasswordConfirm.value
+}
+
+async function deleteExisting() {
+  const answer = await ask(
+    'Вы уверены, что хотите удалить свой кошелек?\nЭто действие нельзя отменить.',
+    { title: 'SecretManager', kind: 'warning', cancelLabel: 'Отменить', okLabel: 'Удалить' }
+  );
+
+  if (answer) {
+    await reset();
+    isNewVault.value = true;
+  }
+}
+
+async function loadExisting() {
+  if (!password.value) {
+    await message('Вы не ввели пароль', { title: 'SecretManager', kind: 'error' });
+    return
+  }
+
+  const result = await unlock(password.value);
+
+  if (!result) {
+    await message('Неверный пароль', { title: 'SecretManager', kind: 'error' });
+    return
+  }
+
+  await navigateTo('/wallet');
+}
+
+async function loadNew() {
+  if (password.value.length < 8) {
+    await message('Минимальная длина пароля 8 символов', { title: 'SecretManager', kind: 'error' });
+    return
+  }
+
+  if (password.value != passwordConfirm.value) {
+    await message('Пароли не совпадают', { title: 'SecretManager', kind: 'error' });
+    return
+  }
+
+  await unlock(password.value);
+  await navigateTo('/wallet');
+}
+
+definePageMeta({
+  layout: 'empty'
+})
 </script>
