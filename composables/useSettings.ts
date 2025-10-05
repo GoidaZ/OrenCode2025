@@ -5,7 +5,7 @@ type Settings = {
   apiBase: string;
   salt?: string;
   verifier?: string;
-
+  user?: string;
   [key: string]: any;
 };
 
@@ -18,7 +18,7 @@ export async function useSettings() {
 
   const entries = await storeRef.entries();
   const defaultSettings: Settings = {
-    apiBase: 'http://localhost:5859'
+    apiBase: 'http://localhost:8081'
   };
 
   const plainSettings = Object.fromEntries(entries) as Record<string, unknown>;

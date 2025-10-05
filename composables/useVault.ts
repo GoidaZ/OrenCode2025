@@ -131,6 +131,39 @@ export default async function useVault() {
     }
   }
 
+  async function simpleEncrypt(plaintext: string) {
+    if (!key.value) throw new Error('Unlock vault first');
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const nonce = crypto.getRandomValues(new Uint8Array(12));
+
+    const ciphertext = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv: nonce },
+        key.value,
+        encoder.encode(plaintext)
+    );
+
+    return btoa(JSON.stringify({
+      value: uint8ArrayToBase64(new Uint8Array(ciphertext)),
+      nonce: uint8ArrayToBase64(nonce),
+      salt: uint8ArrayToBase64(salt),
+    }));
+  }
+
+  async function simpleDecrypt(encrypted: string) {
+    if (!key.value) throw new Error('Unlock vault first');
+    const data = JSON.parse(atob(encrypted)) as { value: string, nonce: string, salt: string };
+    const nonce = base64ToUint8Array(data.nonce);
+    const ciphertext = base64ToUint8Array(data.value);
+
+    const decrypted = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: nonce },
+        key.value,
+        ciphertext
+    );
+
+    return decoder.decode(decrypted) as string;
+  }
+
   async function encryptSecret(plaintext: Record<string, string>) {
     if (!key.value) throw new Error('Unlock vault first');
     const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -228,6 +261,8 @@ export default async function useVault() {
     exists,
     secrets,
     refresh,
+    simpleEncrypt,
+    simpleDecrypt,
     verifyPassword,
     addSecret,
     getSecret,
