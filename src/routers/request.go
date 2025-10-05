@@ -196,6 +196,23 @@ func CreateReq(r *gin.Engine, db *gorm.DB) {
 			return
 		}
 
+		deleteAfter := req.ValidFor
+		if deleteAfter == "" {
+			deleteAfter = "0s"
+		}
+
+		metaPath := fmt.Sprintf("secrets/metadata/users/%s/%s", req.Creator, req.Resource)
+		_, err := client.Logical().Write(metaPath, map[string]interface{}{
+			"custom_metadata": map[string]string{
+				"description": req.Resource,
+			},
+			"delete_version_after": deleteAfter,
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to write secret metadata"})
+			return
+		}
+
 		req.Status = "ACCEPT"
 		db.Save(&req)
 

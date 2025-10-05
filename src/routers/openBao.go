@@ -64,15 +64,14 @@ func OpenBao(r *gin.Engine, db *gorm.DB) {
 			}
 
 			var expireAt *string
-			if tsStr, exists := infoMap["delete_version_after"].(string); exists && tsStr != "" {
-				if dur, err := time.ParseDuration(tsStr); err == nil {
-					t := time.Now().Add(dur).Format(time.RFC3339)
-					expireAt = &t
-				} else if tsFloat, ok := infoMap["delete_version_after"].(float64); ok {
-					t := time.Unix(int64(tsFloat), 0).Format(time.RFC3339)
+			if dt, exists := infoMap["delete_version_after"].(string); exists {
+				if dt == "0s" {
+					expireAt = nil
+				} else if dur, err := time.ParseDuration(dt); err == nil {
+					t := time.Now().Add(dur).UTC().Format(time.RFC3339)
 					expireAt = &t
 				} else {
-					expireAt = &tsStr
+					expireAt = &dt
 				}
 			} else {
 				expireAt = nil
