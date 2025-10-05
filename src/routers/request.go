@@ -125,6 +125,7 @@ func CreateReq(r *gin.Engine, db *gorm.DB) {
 		}
 
 		if err := db.Create(&req).Error; err != nil {
+			log.Printf("DB create failed: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create request"})
 			return
 		}
