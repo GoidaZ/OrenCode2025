@@ -6,3 +6,7 @@
 	path = backend
 	url = https://github.com/GoidaZ/OrenCode2025
 	branch = backend
+[submodule "client"]
+	path = client
+	url = https://github.com/GoidaZ/OrenCode2025
+	branch = client

@@ -8,8 +8,6 @@ services:
     networks:
       - network
     depends_on:
-      keycloak:
-        condition: service_healthy
       backend:
         condition: service_started
       openbao:
@@ -38,42 +36,16 @@ services:
     environment:
       PORT: '8000'
       DATABASE_DSN: 'host=postgres user=admin password=admin dbname=secretmanager port=5432 sslmode=disable'
-      AUTH_REALM_URL: "http://keycloak:8080/realms/secretmanager"
+      AUTH_REALM_URL: "${KEYCLOAK_PUBLIC_URL:-https://kc.airblo.ws/}realms/secretmanager"
       AUTH_CLIENT_ID: "secretmanager"
-      AUTH_CLIENT_SECRET: "HZ7KVvK2qtecvr0YwC8fmFbFDFEzK9iY"
+      AUTH_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-HZ7KVvK2qtecvr0YwC8fmFbFDFEzK9iY}
       AUTH_OPENBAO_USERNAME: "backend"
-      AUTH_OPENBAO_PASSWORD: "S0Z19QMNIovOj10B9v5Lwb9sPOXT1Xai"
+      AUTH_OPENBAO_PASSWORD: ${OPENBAO_PASSWORD:-S0Z19QMNIovOj10B9v5Lwb9sPOXT1Xai}
     networks:
       - network
     depends_on:
-      keycloak:
-        condition: service_healthy
       postgres:
         condition: service_started
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.4.0
-    environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
-      KC_HEALTH_ENABLED: true
-    networks:
-      - network
-    volumes:
-      - keycloak_data:/opt/keycloak/data
-      - ./keycloak/secretmanager-realm.json:/opt/keycloak/data/import/secretmanager-realm.json
-    ports:
-      - "8090:8080"
-    command:
-      - start-dev
-      - --import-realm
-      - --http-enabled=true
-      - --hostname-strict=false
-    healthcheck:
-      test: ['CMD-SHELL', '[ -f /tmp/HealthCheck.java ] || echo "public class HealthCheck { public static void main(String[] args) throws java.lang.Throwable { System.exit(java.net.HttpURLConnection.HTTP_OK == ((java.net.HttpURLConnection)new java.net.URL(args[0]).openConnection()).getResponseCode() ? 0 : 1); } }" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java http://localhost:9000/health/live']
-      interval: 1s
-      timeout: 10s
-      retries: 10
 
   openbao:
     image: ghcr.io/openbao/openbao:2.4.1
@@ -84,14 +56,11 @@ services:
       - openbao_data:/openbao/file/
     networks:
       - network
-    depends_on:
-      keycloak:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "sh", "-c", "wget -qO- http://127.0.0.1:8200/v1/sys/health?standbyok=true >/dev/null"]
       interval: 1s
       timeout: 10s
-      retries: 10
+      retries: 50
 
 volumes:
   postgres_db_data:

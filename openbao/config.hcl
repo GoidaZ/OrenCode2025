@@ -29,7 +29,7 @@ initialize "auth-user" {
     data = {
       oidc_client_id = "secretmanager"
       oidc_client_secret = "HZ7KVvK2qtecvr0YwC8fmFbFDFEzK9iY"
-      oidc_discovery_url = "http://keycloak:8080/realms/secretmanager"
+      oidc_discovery_url = "https://kc.airblo.ws/realms/secretmanager"
       default_role = "default"
     }
   }
@@ -39,9 +39,9 @@ initialize "auth-user" {
     data = {
       user_claim = "preferred_username"
       allowed_redirect_uris = [
-        "tauri://*",
-        "http://127.0.0.1:3001/*",
-        "http://127.0.0.1:8091/*"
+        "tauri://callback",
+        "http://127.0.0.1:3001/callback",
+        "http://127.0.0.1:8091/callback"
       ]
       policies = "per-user"
       ttl = "1h"
@@ -60,7 +60,7 @@ initialize "auth-backend" {
   }
   request "create-backend-user" {
     operation = "create"
-    path = "auth/userpass/users/backend-service"
+    path = "auth/userpass/users/backend"
     data = {
       password = "S0Z19QMNIovOj10B9v5Lwb9sPOXT1Xai"
       token_policies = "backend"
