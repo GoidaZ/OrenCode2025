@@ -1,5 +1,6 @@
 "use client";
 import { SiteHeader } from "@/components/site-header";
+import StatusRequest from "@/components/status-req";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,12 +14,14 @@ import {
 import IRequest from "@/interfaces/Request.interface";
 import requestService from "@/services/request.service";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
   const { data, isLoading } = useQuery({
     queryKey: ["requests"],
     queryFn: () => requestService.list(),
   });
+  const router = useRouter()
 
   if (!data) return <></>;
 
@@ -42,21 +45,12 @@ export default function Page() {
                   <TableCell className="font-medium">
                     {request.creator}
                   </TableCell>
-                  <TableCell>{request.key}</TableCell>
+                  <TableCell>{request.resource}</TableCell>
                   <TableCell>
-                    {request.status === "PENDING" ? (
-                      <Badge className="bg-amber-500 text-white">Ожидает</Badge>
-                    ) : request.status === "REJECT" ? (
-                      <Badge className="bg-red-500 text-white">Отклонена</Badge>
-                    ) : request.status === "ACCEPT" ? (
-                      <Badge className="bg-green-500 text-white">Принята</Badge>
-                    ) : (
-                      <></>
-                    )}
+                    <StatusRequest status={request.status}/>
                   </TableCell>
                   <TableCell className="flex gap-1">
-                    <Button>Принять</Button>
-                    <Button variant="destructive">Отклонить</Button>
+                    <Button onClick={() => router.push(`/req/${request.id}`)}>Подробнее</Button>
                   </TableCell>
                 </TableRow>
               ))}

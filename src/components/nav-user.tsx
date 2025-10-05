@@ -62,7 +62,7 @@ export function NavUser() {
             align="end"
             sideOffset={4}
           >
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => localStorage.removeItem('token')}>
               <IconLogout />
               Выйти
             </DropdownMenuItem>

@@ -42,7 +42,7 @@ const data = {
   ],
   main: [
     {
-      name: "Управление заявками",
+      name: "Список заявок",
       url: "#",
       icon: IconDatabase,
     },

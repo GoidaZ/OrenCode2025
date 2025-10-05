@@ -10,9 +10,9 @@ export default function AuthPageClient() {
 
   const handleLogin = () => {
     const keycloakAuthUrl = new URL(
-      "http://localhost:8080/realms/test/protocol/openid-connect/auth"
+      "https://kc.airblo.ws/realms/secretmanager/protocol/openid-connect/auth"
     );
-    keycloakAuthUrl.searchParams.set("client_id", "backend");
+    keycloakAuthUrl.searchParams.set("client_id", "secretmanager");
     keycloakAuthUrl.searchParams.set("redirect_uri", "http://localhost:3000/auth");
     keycloakAuthUrl.searchParams.set("response_type", "code");
     keycloakAuthUrl.searchParams.set("scope", "openid email profile");
@@ -22,9 +22,9 @@ export default function AuthPageClient() {
 
   const handleCallback = async (code: string) => {
     try {
-      const data = await authService.callback(code);
+      const data = await authService.callback(code, "http://localhost:3000/auth");
       if (!data.id_token) return handleLogin();
-      localStorage.setItem("token", data.id_token);
+      localStorage.setItem("token", data.access_token);
       router.push("/");
     } catch (error) {
       console.error(error);

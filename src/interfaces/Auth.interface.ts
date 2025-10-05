@@ -1,5 +1,6 @@
 export interface ICallbackResponse {
     id_token: string;
+    access_token: string;
 }
 
 export interface IMe {
