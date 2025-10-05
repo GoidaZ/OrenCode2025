@@ -84,6 +84,30 @@ func ValidationKeycloak(r *gin.Engine) gin.HandlerFunc {
 		c.Next()
 	}
 
+	r.GET("/auth/redirect", func(c *gin.Context) {
+		code := c.Query("code")
+		state := c.Query("state")
+
+		if code == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "code not provided"})
+			return
+		}
+
+		tauriCallback := url.URL{
+			Scheme: "tauri",
+			Host:   "callback",
+		}
+
+		q := tauriCallback.Query()
+		q.Set("code", code)
+		if state != "" {
+			q.Set("state", state)
+		}
+		tauriCallback.RawQuery = q.Encode()
+
+		c.Redirect(http.StatusFound, tauriCallback.String())
+	})
+
 	r.GET("/auth/me", authMiddleware, func(c *gin.Context) {
 		user, exists := c.Get("user")
 		if !exists {
