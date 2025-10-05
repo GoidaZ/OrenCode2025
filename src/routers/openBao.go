@@ -55,7 +55,7 @@ func OpenBao(r *gin.Engine, db *gorm.DB) {
 			return
 		}
 
-		keys := []map[string]interface{}{}
+		var keys []map[string]interface{}
 		for keyID, info := range keyInfoRaw {
 			infoMap := info.(map[string]interface{})
 			customMeta := map[string]interface{}{}
@@ -63,15 +63,25 @@ func OpenBao(r *gin.Engine, db *gorm.DB) {
 				customMeta = cm
 			}
 
-			expire := ""
-			if dt, exists := infoMap["delete_version_after"].(string); exists {
-				expire = dt
+			var expireAt *string
+			if tsStr, exists := infoMap["delete_version_after"].(string); exists && tsStr != "" {
+				if dur, err := time.ParseDuration(tsStr); err == nil {
+					t := time.Now().Add(dur).Format(time.RFC3339)
+					expireAt = &t
+				} else if tsFloat, ok := infoMap["delete_version_after"].(float64); ok {
+					t := time.Unix(int64(tsFloat), 0).Format(time.RFC3339)
+					expireAt = &t
+				} else {
+					expireAt = &tsStr
+				}
+			} else {
+				expireAt = nil
 			}
 
 			keys = append(keys, map[string]interface{}{
 				"id":          keyID,
 				"description": customMeta["description"],
-				"expire_at":   expire,
+				"expire_at":   expireAt,
 			})
 		}
 
