@@ -26,7 +26,7 @@
             <div class="divider divider-start m-0"></div>
           </li>
           <li v-if="loggedIn">
-            <button>Выйти из аккаунта <Icon name="fa6-solid:right-from-bracket" class="ml-auto icon-sm"/></button>
+            <button @click="logout">Выйти из аккаунта <Icon name="fa6-solid:right-from-bracket" class="ml-auto icon-sm"/></button>
           </li>
         </ul>
       </div>
@@ -37,7 +37,7 @@
 <script setup>
 const route = useRoute()
 const { lock } = await useVault()
-const { loggedIn, user, login } = await useAuth()
+const { loggedIn, user, login, logout } = await useAuth()
 const { search } = useNavbarSearch()
 
 async function doLock() {

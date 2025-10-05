@@ -48,10 +48,9 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { sendNotification } from '@tauri-apps/plugin-notification';
 import { ask } from '@tauri-apps/plugin-dialog';
-import { listen } from '@tauri-apps/api/event';
 import type { SecretRecord } from "~/composables/useVault";
 
-const { secrets, refresh, addSecret, removeSecret } = await useVault();
+const { secrets, addSecret, removeSecret } = await useVault();
 const { search } = useNavbarSearch()
 
 const filteredSecrets = computed(() => {
@@ -147,10 +146,4 @@ function addTestData() {
   addSecret("test-19", "Firebase Secret Key", { token: "AIzaSyEXAMPLEKEY1234567890" }, null);
   addSecret("test-20", "Test Service Token", { token: "test-token-0987654321" }, null);
 }
-
-const unlisten = await listen('refresh-vault', async (event) => {
-  await refresh();
-});
-
-onBeforeUnmount(unlisten)
 </script>

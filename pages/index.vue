@@ -69,6 +69,7 @@
 import { ask, message } from '@tauri-apps/plugin-dialog';
 
 const { unlock, reset, exists } = await useVault();
+const { unlock: unlockAuth } = await useAuth();
 const isNewVault = ref(!exists());
 
 const password = ref('')
@@ -110,6 +111,7 @@ async function loadExisting() {
     return
   }
 
+  await unlockAuth();
   await navigateTo('/wallet');
 }
 
@@ -125,6 +127,7 @@ async function loadNew() {
   }
 
   await unlock(password.value);
+  await unlockAuth();
   await navigateTo('/wallet');
 }
 

@@ -18,7 +18,7 @@ export async function useSettings() {
 
   const entries = await storeRef.entries();
   const defaultSettings: Settings = {
-    apiBase: 'http://localhost:8081'
+    apiBase: 'http://localhost:8091'
   };
 
   const plainSettings = Object.fromEntries(entries) as Record<string, unknown>;
@@ -32,12 +32,23 @@ export async function useSettings() {
     settings,
     async (newVal) => {
       for (const [key, val] of Object.entries(newVal)) {
+        if (val === undefined) {
+          await storeRef.delete(key);
+          continue;
+        }
+
         await storeRef.set(key, val);
       }
       await storeRef.save();
     },
     { deep: true }
   );
+
+  async function reload() {
+    await storeRef.reload();
+    const updatedEntries = Object.fromEntries(await storeRef.entries());
+    Object.assign(settings, updatedEntries);
+  }
 
   async function set<K extends keyof Settings>(key: K, value: Settings[K]) {
     settings[key] = value;
@@ -51,6 +62,7 @@ export async function useSettings() {
 
   return {
     settings,
+    reload,
     get,
     set,
   };

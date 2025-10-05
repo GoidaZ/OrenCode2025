@@ -1,4 +1,4 @@
-import Database from "@tauri-apps/plugin-sql";
+import { emit } from '@tauri-apps/api/event';
 
 export type SecretRecord = {
   id: string;
@@ -250,7 +250,9 @@ export default async function useVault() {
     await db?.execute('DELETE FROM secrets');
     settings.salt = undefined;
     settings.verifier = undefined;
+    settings.user = undefined;
     secrets.value = [];
+    await emit('reset', {})
     lock();
   }
 
