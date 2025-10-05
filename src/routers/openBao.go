@@ -18,7 +18,7 @@ func OpenBao(r *gin.Engine, db *gorm.DB) {
 	// TODO: Распределить права
 
 	config := openbao.DefaultConfig()
-	config.Address = "http://127.0.0.1:8091/bao"
+	config.Address = "http://openbao:8200/"
 
 	client, err := openbao.NewClient(config)
 	if err != nil {
