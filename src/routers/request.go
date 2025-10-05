@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"sync"
 	"time"
 
@@ -90,6 +91,19 @@ func CreateReq(r *gin.Engine, db *gorm.DB) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+
+		if len(req.Resource) == 0 || len(req.Resource) > 32 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Resource must be 1-32 characters"})
+			return
+		}
+
+		validResource := `^[a-zA-Z0-9\-_\/]+$`
+		matched, err := regexp.MatchString(validResource, req.Resource)
+		if err != nil || !matched {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Resource contains invalid characters"})
+			return
+		}
+
 		req.Creator, _ = uuid.Parse(user.Sub)
 		req.Status = "PENDING"
 		req.CreatedAt = time.Now()
