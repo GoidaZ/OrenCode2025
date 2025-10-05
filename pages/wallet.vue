@@ -54,7 +54,6 @@
 
 <script setup lang="ts">
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
-import { sendNotification } from '@tauri-apps/plugin-notification';
 import { ask } from '@tauri-apps/plugin-dialog';
 import type { SecretRecord } from "~/composables/useVault";
 
@@ -69,13 +68,6 @@ const filteredSecrets = computed(() => {
   const keywords = searchValue.split(/\s+/).filter(k => k.length > 0)
   return secrets.value.filter(s => `${s.id} ${s.description}`.toLowerCase().includes(keywords.join(' ')))
 })
-
-function notify() {
-  sendNotification({
-    title: 'SecretManager',
-    body: 'ГОЙДА ZZZ ZOV 🇷🇺🇷🇺',
-  });
-}
 
 function formatDate(date: Date | null | undefined) {
   if (date === null || date === undefined) return "никогда";

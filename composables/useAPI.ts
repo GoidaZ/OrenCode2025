@@ -1,7 +1,9 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
-import {listen, TauriEvent} from '@tauri-apps/api/event';
+import { listen } from '@tauri-apps/api/event';
 import { start, cancel, onUrl } from '@fabianlars/tauri-plugin-oauth';
-import {message} from "@tauri-apps/plugin-dialog";
+import { message } from "@tauri-apps/plugin-dialog";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { sendNotification } from '@tauri-apps/plugin-notification';
 
 export type UserTokens = {
   access_token?: string;
@@ -65,6 +67,9 @@ export async function useAPI() {
 
   let refreshTimer: number | null = null;
   let syncTimer: number | null = null;
+
+  let ws: WebSocket | null = null;
+  let wsReconnectTimer: number | null = null;
 
   await listen('reset', async (event) => logout());
 
@@ -155,7 +160,10 @@ export async function useAPI() {
   async function saveUser() {
     settings.user = await vault.simpleEncrypt(JSON.stringify(user));
     loggedIn.value = true;
-    forceSync();
+    if (getCurrentWindow().label === 'main') {
+      forceSync();
+      startWS();
+    }
   }
 
   async function refreshToken() {
@@ -191,6 +199,8 @@ export async function useAPI() {
     Object.keys(user).forEach(k => delete (user as any)[k]);
     settings.user = undefined;
     if (refreshTimer) clearTimeout(refreshTimer);
+    stopSync();
+    stopWS();
   }
 
   async function listSecrets(): Promise<KeyInfo[]> {
@@ -337,6 +347,75 @@ export async function useAPI() {
     if (syncing.value) return;
     stopSync();
     startSync();
+  }
+
+  function startWS() {
+    if (!user.tokens?.access_token || ws) return;
+
+    const wsUrl = `${settings.apiBase.replace(/^http/, 'ws')}/ws?token=${encodeURIComponent(user.tokens.access_token)}`;
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      console.log('WS connected');
+      if (wsReconnectTimer) {
+        clearTimeout(wsReconnectTimer);
+        wsReconnectTimer = null;
+      }
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        let title = 'SecretManager';
+        let body = '';
+
+        switch (data.type) {
+          case 'approved':
+            body = `Ваш запрос "${data.request.resource}" был одобрен`;
+            break;
+          case 'rejected':
+            body = `Ваш запрос "${data.request.resource}" был отклонен`;
+            break;
+          default:
+            body = 'Получено новое уведомление';
+        }
+
+        sendNotification({
+          title,
+          body,
+        });
+
+        window.dispatchEvent(new CustomEvent('ws-notification', { detail: data }));
+
+      } catch (e) {
+        console.error('Failed to parse WS message:', e);
+      }
+    };
+
+    ws.onclose = (event) => {
+      console.log('WS closed', event.reason);
+      ws = null;
+      if (loggedIn.value) {
+        wsReconnectTimer = window.setTimeout(startWS, 5000);
+      }
+    };
+
+    ws.onerror = (err) => {
+      console.error('WS error:', err);
+      ws?.close();
+    };
+  }
+
+  function stopWS() {
+    if (ws) {
+      ws.close();
+      ws = null;
+    }
+    if (wsReconnectTimer) {
+      clearTimeout(wsReconnectTimer);
+      wsReconnectTimer = null;
+    }
   }
 
   authState = {

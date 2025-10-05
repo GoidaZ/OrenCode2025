@@ -67,6 +67,7 @@ const { syncing, loggedIn, listRequests, createRequest } = await useAPI()
 
 const loading = ref(true);
 const secrets = ref<RequestInfo[]>([]);
+let refreshTimer: number | null = null;
 
 const filteredSecrets = computed(() => {
   const searchValue = search?.value.toLowerCase() || ''
@@ -81,7 +82,10 @@ async function refreshRequests() {
   loading.value = false;
 }
 
-onMounted(refreshRequests);
+onMounted(async () => {
+  await refreshRequests();
+  refreshTimer = window.setInterval(refreshRequests, 5000);
+});
 
 const unlisten = await listen('create-request', async (event) => {
   const result = await createRequest(event.payload);
@@ -94,7 +98,14 @@ const unlisten = await listen('create-request', async (event) => {
   await refreshRequests();
 });
 
-onBeforeUnmount(unlisten)
+onBeforeUnmount(async () => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+
+  await unlisten();
+});
 
 watch(loggedIn, (newValue) => {
   if (!newValue) navigateTo('/wallet')
