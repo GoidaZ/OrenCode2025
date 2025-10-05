@@ -25,7 +25,6 @@
 1. Поставьте перед `:8091` прокси (например nginx) с включенным TLS со своим доменом (например `https://secretmanager.airblo.ws`)
 2. В `openbao/config.hcl` прописать публичный URL в `allowed_redirect_uris` у `create-oidc-role-default` (например `https://secretmanager.airblo.ws/callback`)
 3. В `openbao/config.hcl` замените `S0Z19QMNIovOj10B9v5Lwb9sPOXT1Xai` на другой пароль и пропишите его значание в `.env` как `OPENBAO_PASSWORD`
-4. В `.env` пропишите значение для `KEYCLOAK_ADMIN_USERNAME` и `KEYCLOAK_ADMIN_PASSWORD` (например `vasya.pupkin` и `superdupersafepassword`)
 
 ## Запуск сервисов
 1. `git clone --recurse-submodules https://github.com/GoidaZ/OrenHack2025`
