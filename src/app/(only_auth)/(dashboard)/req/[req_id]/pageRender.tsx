@@ -93,7 +93,10 @@ export default function RequestPage({ req_id }: { req_id: number }) {
             <span className="font-semibold">Описание:</span> {data.description}
           </div>
           <div>
-            <span className="font-semibold">Описание:</span> {data.description}
+            <span className="font-semibold">Создатель заявки:</span> {data.creator}
+          </div>
+          <div>
+            <span className="font-semibold">Время:</span> {data.valid_for}
           </div>
           <div>
             <span className="font-semibold">Статус:</span>{" "}
