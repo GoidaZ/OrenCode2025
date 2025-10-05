@@ -17,17 +17,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export default function Request() {
-  const req_id = 1;
+export default function Request({ params }: { params: { req_id: number } }) {
   const [body, setBody] = useState<Record<string, string>>({});
-  const { data, isLoading } = useQuery({
-    queryKey: ["requests_info", req_id],
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["requests_info", params.req_id],
     queryFn: () => requestService.list(),
-    select: (data: IRequest[]) => data.filter((r) => r.id == req_id)[0],
+    select: (data: IRequest[]) => data.filter((r) => r.id == params.req_id)[0],
   });
 
   const [nextId, setNextId] = useState(0);
-  const [entries, setEntries] = useState<Array<{ id: number; key: string; value: string }>>([]);
+  const [entries, setEntries] = useState<
+    Array<{ id: number; key: string; value: string }>
+  >([]);
 
   useState(() => {
     const initialEntries = Object.entries(body).map(([key, value], index) => ({
@@ -40,30 +41,32 @@ export default function Request() {
   });
 
   const updateKey = (id: number, newKey: string) => {
-    setEntries(prev => prev.map(entry => 
-      entry.id === id ? { ...entry, key: newKey } : entry
-    ));
+    setEntries((prev) =>
+      prev.map((entry) => (entry.id === id ? { ...entry, key: newKey } : entry))
+    );
   };
 
   const updateValue = (id: number, newValue: string) => {
-    setEntries(prev => prev.map(entry => 
-      entry.id === id ? { ...entry, value: newValue } : entry
-    ));
+    setEntries((prev) =>
+      prev.map((entry) =>
+        entry.id === id ? { ...entry, value: newValue } : entry
+      )
+    );
   };
 
   const removeEntry = (id: number) => {
-    setEntries(prev => prev.filter(entry => entry.id !== id));
+    setEntries((prev) => prev.filter((entry) => entry.id !== id));
   };
 
   const addEntry = () => {
     const newId = nextId;
-    setNextId(prev => prev + 1);
-    setEntries(prev => [...prev, { id: newId, key: "", value: "" }]);
+    setNextId((prev) => prev + 1);
+    setEntries((prev) => [...prev, { id: newId, key: "", value: "" }]);
   };
 
   const convertToBody = () => {
     const result: Record<string, string> = {};
-    entries.forEach(entry => {
+    entries.forEach((entry) => {
       if (entry.key.trim() !== "") {
         result[entry.key] = entry.value;
       }
@@ -73,7 +76,7 @@ export default function Request() {
 
   const handleSave = async () => {
     const finalBody = convertToBody();
-    await requestService.approve(req_id, finalBody);
+    await requestService.approve(params.req_id, finalBody);
   };
 
   if (!data) return <>Loading...</>;
@@ -85,6 +88,9 @@ export default function Request() {
         <div className="bg-muted p-4 rounded-2xl space-y-1">
           <div>
             <span className="font-semibold">ID:</span> {data.resource}
+          </div>
+          <div>
+            <span className="font-semibold">Описание:</span> {data.description}
           </div>
           <div>
             <span className="font-semibold">Описание:</span> {data.description}
@@ -139,15 +145,29 @@ export default function Request() {
               variant="outline"
               onClick={addEntry}
             >
-              Добавить
-            </Button>
-            <Button
-              className="mt-4 flex-1"
-              onClick={handleSave}
-            >
-              Сохранить
+              Добавить поле
             </Button>
           </div>
+        </div>
+        <div className="flex gap-3 w-full">
+          <Button
+            className="mt-4 flex-1 bg-red-400 hover:bg-red-400/80 text-white"
+            onClick={() => {
+              requestService.reject(params.req_id);
+              refetch();
+            }}
+          >
+            Отменить
+          </Button>
+          <Button
+            className="mt-4 flex-1 bg-green-400 hover:bg-green-400/80 text-white"
+            onClick={() => {
+              handleSave();
+              refetch();
+            }}
+          >
+            Сохранить
+          </Button>
         </div>
       </div>
     </>

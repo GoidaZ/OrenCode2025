@@ -12,6 +12,10 @@ class RequestService {
     async approve(id: number, data: Record<string, string>): Promise<void> {
         return (await axiosAuth.post(`${this.BASE_URL}${id}/approve`, {data: data})).data
     }
+
+    async reject(id: number): Promise<void> {
+        return (await axiosAuth.post(`${this.BASE_URL}${id}/reject`)).data
+    }
 }
 
 export default new RequestService()

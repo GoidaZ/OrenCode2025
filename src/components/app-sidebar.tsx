@@ -2,21 +2,8 @@
 
 import * as React from "react";
 import {
-  IconCamera,
-  IconChartBar,
-  IconDashboard,
   IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
-  IconHelp,
   IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
-  IconSearch,
-  IconSettings,
-  IconUsers,
 } from "@tabler/icons-react";
 
 import { NavSecondary } from "@/components/nav-secondary";
@@ -43,7 +30,7 @@ const data = {
   main: [
     {
       name: "Список заявок",
-      url: "#",
+      url: "/",
       icon: IconDatabase,
     },
   ],
