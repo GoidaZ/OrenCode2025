@@ -1,13 +1,17 @@
 ui = false
 
-storage "raft" {
-  path = "/var/lib/raft/"
-  node_id = "raft_node_1"
+storage "file" {
+  path = "/openbao/file/"
+}
+
+seal "static" {
+  current_key_id = "1"
+  current_key    = "file:///openbao/file/unseal.key"
 }
 
 listener "tcp" {
-  address = "0.0.0.0:8200"
-  tls_disable = "true"
+  address       = "0.0.0.0:8200"
+  tls_disable   = true
 }
 
 initialize "auth" {
@@ -25,7 +29,7 @@ initialize "auth" {
     data = {
       oidc_client_id = "secretmanager"
       oidc_client_secret = "HZ7KVvK2qtecvr0YwC8fmFbFDFEzK9iY"
-      oidc_discovery_url = "http://keycloak:8080/auth/realms/secretmanager"
+      oidc_discovery_url = "http://keycloak:8080/realms/secretmanager"
       default_role = "default"
     }
   }
@@ -35,7 +39,8 @@ initialize "auth" {
     data = {
       user_claim = "preferred_username"
       allowed_redirect_uris = [
-        "secretmanager://callback"
+        "tauri://*",
+        "http://127.0.0.1:3001/*"
       ]
       policies = "per-user"
       ttl = "1h"
@@ -45,8 +50,8 @@ initialize "auth" {
     operation = "create"
     path = "auth/keycloak/role/backend"
     data = {
-      user_claim = "client_id"
-      allowed_redirect_uris = []
+      user_claim = "sub"
+      allowed_redirect_uris = ["http://localhost"]
       policies = "backend"
       ttl = "24h"
     }
