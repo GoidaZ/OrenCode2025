@@ -8,7 +8,7 @@
         <th>Дата истечения</th>
         <th class="w-full text-right">
           <button class="btn btn-sm btn-secondary btn-outline w-26" @click="createSecret" v-if="loggedIn">
-            Заявки <Icon name="fa6-solid:plus" class="icon-sm"/>
+            Заявки <Icon name="fa6-solid:list" class="icon-sm"/>
           </button>
           <button class="btn btn-sm btn-accent btn-outline w-26" @click="createSecret">
             Добавить <Icon name="fa6-solid:plus" class="icon-sm"/>
