@@ -14,17 +14,17 @@ import (
 )
 
 type UserClaims struct {
-	Sub               string `json:"sub"`
-	Email             string `json:"email"`
-	PreferredUsername string `json:"preferred_username"`
-	Name              string `json:"name"`
+	Sub               string   `json:"sub"`
+	Email             string   `json:"email"`
+	PreferredUsername string   `json:"preferred_username"`
+	Name              string   `json:"name"`
+	RealmRoles        []string `json:"realm_roles"`
 }
 
-var ( // TODO: Go .env
+var (
 	realmURL     = os.Getenv("AUTH_REALM_URL")
 	clientID     = os.Getenv("AUTH_CLIENT_ID")
 	clientSecret = os.Getenv("AUTH_CLIENT_SECRET")
-	redirectURI  = os.Getenv("AUTH_REDIRECT_URL")
 )
 
 func ValidationKeycloak(r *gin.Engine) gin.HandlerFunc {
@@ -74,8 +74,10 @@ func ValidationKeycloak(r *gin.Engine) gin.HandlerFunc {
 
 	r.GET("/auth/callback", func(c *gin.Context) {
 		code := c.Query("code")
-		if code == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "code not provided"})
+		redirectURI := c.Query("redirect_uri")
+
+		if code == "" || redirectURI == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "code or redirect_uri not provided"})
 			return
 		}
 
@@ -86,7 +88,6 @@ func ValidationKeycloak(r *gin.Engine) gin.HandlerFunc {
 		data.Set("client_id", clientID)
 		data.Set("client_secret", clientSecret)
 		data.Set("code", code)
-		data.Set("redirect_uri", redirectURI)
 
 		resp, err := http.PostForm(tokenURL, data)
 		if err != nil {
