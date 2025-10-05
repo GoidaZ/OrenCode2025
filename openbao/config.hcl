@@ -14,7 +14,7 @@ listener "tcp" {
   tls_disable   = true
 }
 
-initialize "auth" {
+initialize "auth-user" {
   request "enable-oidc" {
     operation = "create"
     path = "sys/auth/keycloak"
@@ -47,17 +47,29 @@ initialize "auth" {
       ttl = "1h"
     }
   }
-  request "create-oidc-role-backend" {
+}
+
+initialize "auth-backend" {
+  request "enable-userpass" {
     operation = "create"
-    path = "auth/keycloak/role/backend"
+    path = "sys/auth/userpass"
     data = {
-      user_claim = "sub"
-      allowed_redirect_uris = ["http://localhost"]
-      policies = "backend"
-      ttl = "24h"
+      type = "userpass"
+      description = "Username/password authentication for backend service"
+    }
+  }
+  request "create-backend-user" {
+    operation = "create"
+    path = "auth/userpass/users/backend-service"
+    data = {
+      password = "S0Z19QMNIovOj10B9v5Lwb9sPOXT1Xai"
+      token_policies = "backend"
+      token_ttl = "1h"
+      token_max_ttl = "24h"
     }
   }
 }
+
 
 initialize "kv" {
   request "mount-secrets" {

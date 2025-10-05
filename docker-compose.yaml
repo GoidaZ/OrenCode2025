@@ -41,6 +41,8 @@ services:
       AUTH_REALM_URL: "http://keycloak:8080/realms/secretmanager"
       AUTH_CLIENT_ID: "secretmanager"
       AUTH_CLIENT_SECRET: "HZ7KVvK2qtecvr0YwC8fmFbFDFEzK9iY"
+      AUTH_OPENBAO_USERNAME: "backend"
+      AUTH_OPENBAO_PASSWORD: "S0Z19QMNIovOj10B9v5Lwb9sPOXT1Xai"
     networks:
       - network
     depends_on:
