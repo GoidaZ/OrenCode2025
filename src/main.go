@@ -51,11 +51,14 @@ func main() {
 
 	slog.Debug("Configuring CORS middleware")
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
+		AllowOriginFunc: func(origin string) bool {
+			return true
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}))
+
 	slog.Info("CORS middleware configured")
 
 	slog.Info("Registering application routes...")
