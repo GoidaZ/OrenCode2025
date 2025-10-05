@@ -21,7 +21,6 @@
 ## Поднятие на прод
 Проект настроен под быстрый запуск локально, но для запуска на проде необходимо несколько дополнительных шагов.
 1. Поставьте перед `:8091` прокси (например nginx) с включенным TLS со своим доменом (например `https://secretmanager.airblo.ws`)
-2. В `openbao/config.hcl` прописать публичный URL в `allowed_redirect_uris` у `create-oidc-role-default` (например `https://secretmanager.airblo.ws/callback`)
 3. В `openbao/config.hcl` замените `S0Z19QMNIovOj10B9v5Lwb9sPOXT1Xai` на другой пароль и пропишите его значание в `.env` как `OPENBAO_PASSWORD`
 
 ## Запуск сервисов
