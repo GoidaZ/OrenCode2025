@@ -23,7 +23,7 @@ export default function Page() {
   });
   const router = useRouter()
 
-  if (!data) return <></>;
+  if (!data) return <>Loading...</>;
 
   return (
     <>

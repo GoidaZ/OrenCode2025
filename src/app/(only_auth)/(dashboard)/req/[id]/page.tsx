@@ -26,25 +26,57 @@ export default function Request() {
     select: (data: IRequest[]) => data.filter((r) => r.id == req_id)[0],
   });
 
-  const updateKey = (index: number, newKey: string) => {
-    const entries = Object.entries(body);
-    entries[index][0] = newKey;
-    setBody(Object.fromEntries(entries));
+  const [nextId, setNextId] = useState(0);
+  const [entries, setEntries] = useState<Array<{ id: number; key: string; value: string }>>([]);
+
+  useState(() => {
+    const initialEntries = Object.entries(body).map(([key, value], index) => ({
+      id: index,
+      key,
+      value,
+    }));
+    setEntries(initialEntries);
+    setNextId(initialEntries.length);
+  });
+
+  const updateKey = (id: number, newKey: string) => {
+    setEntries(prev => prev.map(entry => 
+      entry.id === id ? { ...entry, key: newKey } : entry
+    ));
   };
 
-  const updateValue = (index: number, newValue: string) => {
-    const entries = Object.entries(body);
-    entries[index][1] = newValue;
-    setBody(Object.fromEntries(entries));
+  const updateValue = (id: number, newValue: string) => {
+    setEntries(prev => prev.map(entry => 
+      entry.id === id ? { ...entry, value: newValue } : entry
+    ));
   };
 
-  const removeEntry = (index: number) => {
-    const entries = Object.entries(body);
-    entries.splice(index, 1);
-    setBody(Object.fromEntries(entries));
+  const removeEntry = (id: number) => {
+    setEntries(prev => prev.filter(entry => entry.id !== id));
   };
 
-  if (!data) return;
+  const addEntry = () => {
+    const newId = nextId;
+    setNextId(prev => prev + 1);
+    setEntries(prev => [...prev, { id: newId, key: "", value: "" }]);
+  };
+
+  const convertToBody = () => {
+    const result: Record<string, string> = {};
+    entries.forEach(entry => {
+      if (entry.key.trim() !== "") {
+        result[entry.key] = entry.value;
+      }
+    });
+    return result;
+  };
+
+  const handleSave = async () => {
+    const finalBody = convertToBody();
+    await requestService.approve(req_id, finalBody);
+  };
+
+  if (!data) return <>Loading...</>;
 
   return (
     <>
@@ -72,19 +104,19 @@ export default function Request() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.entries(body).map(([key, value], index) => (
-                <TableRow key={index}>
+              {entries.map((entry) => (
+                <TableRow key={entry.id}>
                   <TableCell>
                     <Input
-                      value={key}
-                      onChange={(e) => updateKey(index, e.target.value)}
+                      value={entry.key}
+                      onChange={(e) => updateKey(entry.id, e.target.value)}
                       placeholder="Введите ключ"
                     />
                   </TableCell>
                   <TableCell>
                     <Input
-                      value={value}
-                      onChange={(e) => updateValue(index, e.target.value)}
+                      value={entry.value}
+                      onChange={(e) => updateValue(entry.id, e.target.value)}
                       placeholder="Введите значение"
                     />
                   </TableCell>
@@ -92,7 +124,7 @@ export default function Request() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => removeEntry(index)}
+                      onClick={() => removeEntry(entry.id)}
                     >
                       Удалить
                     </Button>
@@ -102,21 +134,19 @@ export default function Request() {
             </TableBody>
           </Table>
           <div className="flex gap-3 w-full">
-          <Button
-            className="mt-4 flex-1"
-            variant="outline"
-            onClick={() => setBody({ ...body, "": "" })}
-          >
-            Добавить
-          </Button>
-          <Button
-            className="mt-4 flex-1"
-            onClick={async () => {
-                await requestService.approve(req_id, body)
-            }}
-          >
-            Сохранить
-          </Button>
+            <Button
+              className="mt-4 flex-1"
+              variant="outline"
+              onClick={addEntry}
+            >
+              Добавить
+            </Button>
+            <Button
+              className="mt-4 flex-1"
+              onClick={handleSave}
+            >
+              Сохранить
+            </Button>
           </div>
         </div>
       </div>
