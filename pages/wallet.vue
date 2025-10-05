@@ -58,7 +58,7 @@ import type { SecretRecord } from "~/composables/useVault";
 
 const { secrets, addSecret, removeSecret } = await useVault()
 const { search } = useNavbarSearch()
-const { syncing } = await useAPI()
+const { syncing, deleteSecret: deleteRemote } = await useAPI()
 
 const filteredSecrets = computed(() => {
   const searchValue = search?.value.toLowerCase() || ''
@@ -98,6 +98,7 @@ async function deleteSecret(secret: Omit<SecretRecord, 'value' | 'nonce' | 'salt
 
   if (confirmed) {
     await removeSecret(secret.id);
+    await deleteRemote(secret.id);
   }
 }
 

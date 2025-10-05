@@ -102,8 +102,8 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { emit } from '@tauri-apps/api/event';
 
 const { addSecret, unlock } = await useVault()
+const { createSecret } = await useAPI()
 
-// Form fields
 const id = ref('')
 const description = ref('')
 const expiresAt = ref<string | null>(null)
@@ -139,12 +139,16 @@ async function submitSecret() {
   }
 
   const expiresDate = expiresAt.value ? new Date(expiresAt.value) : null
+
   try {
     await addSecret(id.value, description.value, secretValue, expiresDate)
   } catch {
     await message('Секрет с таким ID уже существует', { title: 'SecretManager', kind: 'error' });
     return;
   }
+
+  const expiresDateStr = expiresAt.value ? new Date(expiresAt.value).toISOString() : null
+  await createSecret(id.value, { data: secretValue, description: description.value, expireAt: expiresDateStr });
 
   await emit("refresh-vault", {});
   await getCurrentWindow().destroy();
