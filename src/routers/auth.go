@@ -88,6 +88,7 @@ func ValidationKeycloak(r *gin.Engine) gin.HandlerFunc {
 		data.Set("client_id", clientID)
 		data.Set("client_secret", clientSecret)
 		data.Set("code", code)
+		data.Set("redirect_uri", redirectURI)
 
 		resp, err := http.PostForm(tokenURL, data)
 		if err != nil {
