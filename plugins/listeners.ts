@@ -7,7 +7,7 @@ export default defineNuxtPlugin(async (app) => {
 
   const { refresh } = await useVault();
   const { reload } = await useSettings();
-  const { authorize } = await useAuth();
+  const { authorize } = await useAPI();
 
   const unlisten1 = await listen('refresh-vault', async (event) => {
     await refresh();

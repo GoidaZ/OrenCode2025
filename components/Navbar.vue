@@ -37,7 +37,7 @@
 <script setup>
 const route = useRoute()
 const { lock } = await useVault()
-const { loggedIn, user, login, logout } = await useAuth()
+const { loggedIn, user, login, logout } = await useAPI()
 const { search } = useNavbarSearch()
 
 async function doLock() {

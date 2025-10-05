@@ -7,6 +7,12 @@ export default defineNuxtConfig({
   css: ["~/assets/app.css"],
   ssr: false,
 
+  nitro: {
+    prerender: {
+      routes: ['/'],
+    }
+  },
+
   // Enables the development server to be discoverable by other devices when running on iOS physical devices
   devServer: {
     host: '127.0.0.1',

@@ -69,7 +69,7 @@
 import { ask, message } from '@tauri-apps/plugin-dialog';
 
 const { unlock, reset, exists } = await useVault();
-const { unlock: unlockAuth } = await useAuth();
+const { unlock: unlockAuth } = await useAPI();
 const isNewVault = ref(!exists());
 
 const password = ref('')
