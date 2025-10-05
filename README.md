@@ -1,15 +1,8 @@
-# secretmanager
+# SecretManager
 
-To install dependencies:
-
+## Сборка
+Для сборки нужно установить [bun](https://bun.com/) и [Rust](https://rust-lang.org/)
 ```bash
 bun install
+bun tauri build
 ```
-
-To run:
-
-```bash
-bun run 
-```
-
-This project was created using `bun init` in bun v1.2.19. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
