@@ -86,34 +86,48 @@ func CreateReq(r *gin.Engine, db *gorm.DB) {
 			return
 		}
 		user := userClaims.(UserClaims)
-		var req models.Request
-		if err := c.ShouldBindJSON(&req); err != nil {
+
+		var input struct {
+			Resource    string `json:"resource"`
+			Description string `json:"description"`
+			Reason      string `json:"reason"`
+			ValidFor    string `json:"valid_for"`
+		}
+
+		if err := c.ShouldBindJSON(&input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		if len(req.Resource) == 0 || len(req.Resource) > 32 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Resource must be 1-32 characters"})
+		if input.Resource == "" || input.Description == "" || input.Reason == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Resource, Description, and Reason are required"})
 			return
 		}
 
+		if len(input.Resource) > 32 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Resource must be at most 32 characters"})
+			return
+		}
 		validResource := `^[a-zA-Z0-9\-_\/]+$`
-		matched, err := regexp.MatchString(validResource, req.Resource)
-		if err != nil || !matched {
+		if matched, _ := regexp.MatchString(validResource, input.Resource); !matched {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Resource contains invalid characters"})
 			return
 		}
 
-		req.Creator, _ = uuid.Parse(user.Sub)
-		req.Status = "PENDING"
-		req.CreatedAt = time.Now()
+		req := models.Request{
+			Creator:     uuid.MustParse(user.Sub),
+			Resource:    input.Resource,
+			Description: input.Description,
+			Reason:      input.Reason,
+			ValidFor:    input.ValidFor,
+			Status:      "PENDING",
+			CreatedAt:   time.Now(),
+		}
 
 		if err := db.Create(&req).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create request"})
 			return
 		}
-
-		hub.send(user.Sub, req)
 
 		c.JSON(http.StatusCreated, req)
 	})
@@ -218,7 +232,7 @@ func CreateReq(r *gin.Engine, db *gorm.DB) {
 		metaPath := fmt.Sprintf("secrets/metadata/users/%s/%s", req.Creator, req.Resource)
 		_, err := client.Logical().Write(metaPath, map[string]interface{}{
 			"custom_metadata": map[string]string{
-				"description": req.Resource,
+				"description": req.Description,
 			},
 			"delete_version_after": deleteAfter,
 		})
