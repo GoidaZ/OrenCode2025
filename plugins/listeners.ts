@@ -1,5 +1,4 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { message } from '@tauri-apps/plugin-dialog';
 import { listen } from '@tauri-apps/api/event';
 
 export default defineNuxtPlugin(async (app) => {

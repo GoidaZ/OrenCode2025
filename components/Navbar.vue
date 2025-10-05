@@ -1,10 +1,13 @@
 <template>
   <div class="navbar bg-base-200 shadow-sm backdrop-blur-md sticky z-100 top-0 p-0 px-4 gap-1">
-    <div class="flex-none" :class="{'!flex-1': route.path !== '/wallet'}">
+    <div class="flex-none" :class="{'!flex-1': route.path !== '/wallet' && route.path !== '/requests/list' }">
       <NuxtLink to="/wallet" class="btn btn-ghost text-xl p-2">SecretManager</NuxtLink>
     </div>
     <div class="flex grow" v-if="route.path === '/wallet'">
       <input type="text" placeholder="Поиск секретов..." class="input input-bordered w-full max-w-150" v-model="search" />
+    </div>
+    <div class="flex grow" v-if="route.path === '/requests/list'">
+      <input type="text" placeholder="Поиск запросов..." class="input input-bordered w-full max-w-150" v-model="search" />
     </div>
     <div class="flex-none gap-2">
       <button v-if="!loggedIn" class="btn btn-outline btn-success mr-2" @click="login">Войти</button>

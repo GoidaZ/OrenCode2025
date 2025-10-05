@@ -247,7 +247,7 @@ export async function useAPI() {
     if (!user.tokens?.access_token) throw new Error("login first");
 
     try {
-      return await $fetch<RequestInfo>(`${settings.apiBase}/request/create`, {
+      return await $fetch<RequestInfo>(`${settings.apiBase}/api/request/create`, {
         method: 'POST',
         body: input,
         headers: { Authorization: `Bearer ${user.tokens.access_token}` },
@@ -262,7 +262,7 @@ export async function useAPI() {
     if (!user.tokens?.access_token) throw new Error("login first");
 
     try {
-      return await $fetch<RequestInfo[]>(`${settings.apiBase}/request/list`, {
+      return await $fetch<RequestInfo[]>(`${settings.apiBase}/api/request/list`, {
         headers: { Authorization: `Bearer ${user.tokens.access_token}` },
       });
     } catch (err) {
