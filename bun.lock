@@ -4,6 +4,7 @@
     "": {
       "name": "nuxt-app",
       "dependencies": {
+        "@fabianlars/tauri-plugin-oauth": "2",
         "@nuxt/icon": "2.0.0",
         "@tauri-apps/api": "^2",
         "@tauri-apps/plugin-autostart": "~2",
@@ -150,6 +151,8 @@
     "@esbuild/win32-ia32": ["@esbuild/win32-ia32@0.25.10", "", { "os": "win32", "cpu": "ia32" }, "sha512-QHPDbKkrGO8/cz9LKVnJU22HOi4pxZnZhhA2HYHez5Pz4JeffhDjf85E57Oyco163GnzNCVkZK0b/n4Y0UHcSw=="],
 
     "@esbuild/win32-x64": ["@esbuild/win32-x64@0.25.10", "", { "os": "win32", "cpu": "x64" }, "sha512-9KpxSVFCu0iK1owoez6aC/s/EdUQLDN3adTxGCqxMVhrPDj6bt5dbrHDXUuq+Bs2vATFBBrQS5vdQ/Ed2P+nbw=="],
+
+    "@fabianlars/tauri-plugin-oauth": ["@fabianlars/tauri-plugin-oauth@2.0.0", "", { "dependencies": { "@tauri-apps/api": "^2.0.3" } }, "sha512-I1s08ZXrsFuYfNWusAcpLyiCfr5TCvaBrRuKfTG+XQrcaqnAcwjdWH0U5J9QWuMDLwCUMnVxdobtMJzPR8raxQ=="],
 
     "@iconify/collections": ["@iconify/collections@1.0.601", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-0rTkng4arHTfeEPA+h5zHHBCdvRsWxcrGbit+dOGyRqNj7Rtx3PwBtdh/q9+h8wai5j+wcbkaJSQPHqgRLb2zw=="],
 

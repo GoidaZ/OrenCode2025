@@ -18,7 +18,7 @@ export async function useSettings() {
 
   const entries = await storeRef.entries();
   const defaultSettings: Settings = {
-    apiBase: 'http://localhost:8091'
+    apiBase: 'http://127.0.0.1:8091'
   };
 
   const plainSettings = Object.fromEntries(entries) as Record<string, unknown>;

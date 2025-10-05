@@ -17,17 +17,6 @@ export default defineNuxtPlugin(async (app) => {
     await reload();
   });
 
-  const unlisten3 = await listen('authorize', async (event) => {
-    try {
-      await authorize((event.payload as any).code as string);
-    } catch (err: any) {
-      console.log(err);
-      await message(err.message || 'Произошла неизвестная ошибка во время авторизации', { title: 'SecretManager', kind: 'error' });
-      return
-    }
-  });
-
   onBeforeUnmount(unlisten1)
   onBeforeUnmount(unlisten2)
-  onBeforeUnmount(unlisten3)
 })

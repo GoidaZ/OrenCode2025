@@ -1,5 +1,7 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
-import { listen } from '@tauri-apps/api/event';
+import {listen, TauriEvent} from '@tauri-apps/api/event';
+import { start, cancel, onUrl } from '@fabianlars/tauri-plugin-oauth';
+import {message} from "@tauri-apps/plugin-dialog";
 
 export type UserTokens = {
   access_token?: string;
@@ -64,26 +66,18 @@ export async function useAPI() {
 
   await listen('reset', async (event) => logout());
 
-  function getRedirectURI() {
-    if (import.meta.env.DEV) {
-      return 'http://127.0.0.1:3001/callback';
-    }
-    return `${settings.apiBase}/api/auth/redirect`;
-  }
+  async function login() {
+    const port = await start();
 
-  function getAuthURL() {
-    const redirect_uri = getRedirectURI();
+    const redirect_uri = `http://localhost:${port}/callback`;
     const url = new URL(`https://kc.airblo.ws/realms/secretmanager/protocol/openid-connect/auth`);
     url.searchParams.set('client_id', 'secretmanager');
     url.searchParams.set('response_type', 'code');
     url.searchParams.set('scope', 'openid offline_access');
     url.searchParams.set('redirect_uri', redirect_uri);
-    return url.toString();
-  }
 
-  async function login() {
     const webview = new WebviewWindow(`keycloak`, {
-      url: getAuthURL(),
+      url: url.toString(),
       title: "Keycloak",
       minWidth: 600,
       minHeight: 600,
@@ -94,6 +88,24 @@ export async function useAPI() {
 
     await webview.once('tauri://error', function (e) {
       console.error(e);
+    });
+
+    await webview.once("tauri://destroyed", async function (e) {
+      await cancel(port);
+    });
+
+    await onUrl(async (target) => {
+      try {
+        const callbackUrl = new URL(target);
+        const code = callbackUrl.searchParams.get('code');
+        await authorize(code as string, redirect_uri);
+      } catch (err: any) {
+        console.log(err);
+        await message(err.message || 'Произошла неизвестная ошибка во время авторизации', { title: 'SecretManager', kind: 'error' });
+        return
+      }
+      await webview.close();
+      await cancel(port);
     });
   }
 
@@ -113,8 +125,7 @@ export async function useAPI() {
     }
   }
 
-  async function authorize(code: string) {
-    const redirect_uri = getRedirectURI();
+  async function authorize(code: string, redirect_uri: string) {
     const data = await $fetch<UserTokens>(`${settings.apiBase}/api/auth/callback?code=${encodeURIComponent(code)}&redirect_uri=${encodeURIComponent(redirect_uri)}`);
 
     user.tokens = user.tokens || {};

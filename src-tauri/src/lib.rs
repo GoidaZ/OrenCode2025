@@ -1,6 +1,7 @@
 use tauri::{Manager, RunEvent};
 use tauri_plugin_log::log;
 use tauri_plugin_sql::{Migration, MigrationKind};
+use tauri_plugin_oauth::start;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -13,6 +14,7 @@ pub fn run() {
 
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_oauth::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(
             tauri_plugin_log::Builder::new()

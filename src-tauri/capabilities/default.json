@@ -26,6 +26,8 @@
     "notification:default",
     "store:default",
     "dialog:default",
+    "oauth:allow-start",
+    "oauth:allow-cancel",
     "fs:default",
     {
       "identifier": "fs:allow-read-dir",
