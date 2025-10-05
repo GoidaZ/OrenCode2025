@@ -124,13 +124,26 @@ func OpenBao(r *gin.Engine, db *gorm.DB) {
 		keyID := c.Param("name")
 
 		var req struct {
-			Data     map[string]interface{} `json:"data"`
-			Metadata map[string]interface{} `json:"metadata"`
+			Data        map[string]interface{} `json:"data"`
+			Description string                 `json:"description"`
+			ExpireAt    *string                `json:"expireAt"`
 		}
 
 		if err := c.BindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
+		}
+
+		deleteAfter := "0s"
+		if req.ExpireAt != nil {
+			if t, err := time.Parse(time.RFC3339, *req.ExpireAt); err == nil {
+				dur := t.Sub(time.Now().UTC())
+				if dur > 0 {
+					deleteAfter = dur.String()
+				} else {
+					deleteAfter = "0s"
+				}
+			}
 		}
 
 		dataPath := fmt.Sprintf("secrets/data/users/%s/%s", userID, keyID)
@@ -139,12 +152,14 @@ func OpenBao(r *gin.Engine, db *gorm.DB) {
 			return
 		}
 
-		if req.Metadata != nil {
-			metaPath := fmt.Sprintf("secrets/metadata/users/%s/%s", userID, keyID)
-			if _, err := client.Logical().Write(metaPath, req.Metadata); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save key metadata"})
-				return
-			}
+		meta := map[string]interface{}{
+			"description":          req.Description,
+			"delete_version_after": deleteAfter,
+		}
+		metaPath := fmt.Sprintf("secrets/metadata/users/%s/%s", userID, keyID)
+		if _, err := client.Logical().Write(metaPath, meta); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save key metadata"})
+			return
 		}
 
 		c.Status(http.StatusNoContent)
