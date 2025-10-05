@@ -14,41 +14,6 @@ listener "tcp" {
   tls_disable   = true
 }
 
-initialize "auth-user" {
-  request "enable-oidc" {
-    operation = "create"
-    path = "sys/auth/keycloak"
-    data = {
-      type = "oidc"
-      description = "Keycloak authentication"
-    }
-  }
-  request "configure-keycloak" {
-    operation = "create"
-    path = "auth/keycloak/config"
-    data = {
-      oidc_client_id = "secretmanager"
-      oidc_client_secret = "HZ7KVvK2qtecvr0YwC8fmFbFDFEzK9iY"
-      oidc_discovery_url = "https://kc.airblo.ws/realms/secretmanager"
-      default_role = "default"
-    }
-  }
-  request "create-oidc-role-default" {
-    operation = "create"
-    path = "auth/keycloak/role/default"
-    data = {
-      user_claim = "preferred_username"
-      allowed_redirect_uris = [
-        "tauri://callback",
-        "http://127.0.0.1:3001/callback",
-        "http://127.0.0.1:8091/callback"
-      ]
-      policies = "per-user"
-      ttl = "1h"
-    }
-  }
-}
-
 initialize "auth-backend" {
   request "enable-userpass" {
     operation = "create"
@@ -86,23 +51,6 @@ initialize "kv" {
 }
 
 initialize "policy" {
-  request "create-per-user" {
-    operation = "create"
-    path = "sys/policies/acl/per-user"
-    data = {
-      policy = <<EOT
-# Allow each user to manage their own secrets
-path "secrets/data/users/{{identity.entity.aliases.keycloak.name}}/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
-}
-
-# Allow full access to metadata for their own secrets
-path "secrets/metadata/users/{{identity.entity.aliases.keycloak.name}}/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
-}
-EOT
-    }
-  }
   request "create-backend" {
     operation = "create"
     path = "sys/policies/acl/backend"
@@ -110,11 +58,11 @@ EOT
       policy = <<EOT
 # Backend can manage all user secrets
 path "secrets/data/users/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
+  capabilities = ["create", "read", "update", "delete", "list", "scan"]
 }
 
 path "secrets/metadata/users/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
+  capabilities = ["create", "read", "update", "delete", "list", "scan"]
 }
 EOT
     }
