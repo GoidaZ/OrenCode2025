@@ -62,7 +62,7 @@ func (h *Hub) send(userID string, message interface{}) {
 	}
 }
 
-func OpenBaoRouter(r *gin.Engine, db *gorm.DB) {
+func CreateReq(r *gin.Engine, db *gorm.DB) {
 	config := openbao.DefaultConfig()
 	config.Address = "http://openbao:8200/"
 	client, err := openbao.NewClient(config)

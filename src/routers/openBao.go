@@ -2,6 +2,7 @@ package routers
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
@@ -11,7 +12,7 @@ import (
 	openbao "github.com/openbao/openbao/api/v2"
 )
 
-func OpenBao(r *gin.Engine) {
+func OpenBao(r *gin.Engine, db *gorm.DB) {
 	config := openbao.DefaultConfig()
 	config.Address = "http://openbao:8200/"
 
