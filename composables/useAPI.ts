@@ -170,16 +170,22 @@ export async function useAPI() {
     if (!user.tokens?.refresh_token) return false;
 
     try {
-      const data = await $fetch<UserTokens>('/api/auth/refresh', {
-        method: 'POST', body: { refresh_token: user.tokens.refresh_token },
+      const data = await $fetch<UserTokens>(`${settings.apiBase}/api/auth/refresh`, {
+        method: 'POST',
+        body: { refresh_token: user.tokens.refresh_token },
       });
 
-      user.tokens = user.tokens || {};
-      Object.assign(user.tokens, data);
+      user.tokens = { ...(user.tokens || {}), ...data };
       await saveUser();
-      scheduleRefresh();
+
+      if (user.tokens.expires_in) {
+        scheduleRefresh();
+      }
+
+      console.log('Token refreshed:', user.tokens.access_token);
       return true;
     } catch (err) {
+      console.error('Refresh token failed:', err);
       logout();
       return false;
     }
@@ -189,8 +195,9 @@ export async function useAPI() {
     if (!user.tokens?.expires_in) return;
     if (refreshTimer) clearTimeout(refreshTimer);
 
-    const expiresInMs = (user.tokens?.expires_in - 60) * 1000;
+    const expiresInMs = (user.tokens.expires_in - 60) * 1000;
     refreshTimer = window.setTimeout(refreshToken, expiresInMs);
+    console.log('Next refresh scheduled in ms:', expiresInMs);
   }
 
   function logout() {
