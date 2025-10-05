@@ -64,6 +64,10 @@ path "secrets/data/users/*" {
 path "secrets/metadata/users/*" {
   capabilities = ["create", "read", "update", "delete", "list", "scan"]
 }
+
+path "secrets/detailed-metadata/users/*" {
+  capabilities = ["create", "read", "update", "delete", "list", "scan"]
+}
 EOT
     }
   }
