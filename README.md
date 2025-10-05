@@ -24,8 +24,8 @@
 3. В `openbao/config.hcl` замените `S0Z19QMNIovOj10B9v5Lwb9sPOXT1Xai` на другой пароль и пропишите его значание в `.env` как `OPENBAO_PASSWORD`
 
 ## Запуск сервисов
-1. `git clone --recurse-submodules https://github.com/GoidaZ/OrenHack2025`
-2. `cd OrenHack2025`
+1. `git clone --recurse-submodules https://github.com/GoidaZ/OrenCode2025`
+2. `cd OrenCode2025`
 3. `sudo docker compose up -d`
 4. PROFIT!
 
