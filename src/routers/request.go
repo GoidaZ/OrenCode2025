@@ -2,8 +2,10 @@ package routers
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"io"
+	"github.com/gorilla/websocket"
+	_ "io"
 	"log"
 	"net/http"
 	"os"
@@ -11,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	openbao "github.com/openbao/openbao/api/v2"
 	"gorm.io/gorm"
 
@@ -24,8 +25,9 @@ type Hub struct {
 }
 
 type Client struct {
-	userID string
-	conn   *gin.Context
+	userID   string
+	conn     *websocket.Conn
+	sendLock sync.Mutex
 }
 
 var hub = Hub{
@@ -47,20 +49,36 @@ func (h *Hub) unregister(c *Client) {
 	defer h.lock.Unlock()
 	if conns, ok := h.clients[c.userID]; ok {
 		delete(conns, c)
+		_ = c.conn.Close()
 		if len(conns) == 0 {
 			delete(h.clients, c.userID)
 		}
 	}
 }
 
-func (h *Hub) send(userID string, message interface{}) {
+func (h *Hub) sendToUser(userID string, message interface{}) {
 	h.lock.RLock()
-	defer h.lock.RUnlock()
-	if conns, ok := h.clients[userID]; ok {
-		for client := range conns {
-			client.conn.JSON(http.StatusOK, message)
+	conns, ok := h.clients[userID]
+	h.lock.RUnlock()
+	if !ok {
+		return
+	}
+
+	for client := range conns {
+		client.sendLock.Lock()
+		err := client.conn.WriteJSON(message)
+		client.sendLock.Unlock()
+		if err != nil {
+			log.Printf("ws: write failed for user %s: %v", userID, err)
+			h.unregister(client)
 		}
 	}
+}
+
+var wsUpgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
 }
 
 func CreateReq(r *gin.Engine, db *gorm.DB) {
@@ -156,11 +174,27 @@ func CreateReq(r *gin.Engine, db *gorm.DB) {
 			return
 		}
 		user := userClaims.(UserClaims)
-		client := &Client{userID: user.Sub, conn: c}
-		hub.register(client)
-		defer hub.unregister(client)
 
-		c.Stream(func(w io.Writer) bool { return true })
+		conn, err := wsUpgrader.Upgrade(c.Writer, c.Request, nil)
+		if err != nil {
+			log.Printf("ws: upgrade failed: %v", err)
+			return
+		}
+
+		client := &Client{userID: user.Sub, conn: conn}
+		hub.register(client)
+
+		go func() {
+			defer hub.unregister(client)
+			for {
+				if _, _, err := conn.ReadMessage(); err != nil {
+					if !websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
+						log.Printf("ws: closed for %s: %v", user.Sub, err)
+					}
+					return
+				}
+			}
+		}()
 	})
 
 	manager := r.Group("/request/manage")
@@ -245,7 +279,7 @@ func CreateReq(r *gin.Engine, db *gorm.DB) {
 		req.Status = "ACCEPT"
 		db.Save(&req)
 
-		hub.send(req.Creator.String(), map[string]interface{}{
+		hub.sendToUser(req.Creator.String(), map[string]interface{}{
 			"type":    "approved",
 			"request": req,
 		})
@@ -264,7 +298,7 @@ func CreateReq(r *gin.Engine, db *gorm.DB) {
 		req.Status = "REJECT"
 		db.Save(&req)
 
-		hub.send(req.Creator.String(), map[string]interface{}{
+		hub.sendToUser(req.Creator.String(), map[string]interface{}{
 			"type":    "rejected",
 			"request": req,
 		})
