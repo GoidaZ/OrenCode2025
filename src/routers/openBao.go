@@ -2,21 +2,16 @@ package routers
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	openbao "github.com/openbao/openbao/api/v2"
-
-	"log"
-	"net/http"
-	"orencode/src/models"
-	"os"
-
-	"gorm.io/gorm"
 )
 
-func OpenBao(r *gin.Engine, db *gorm.DB) {
-	// TODO: Распределить права
-
+func OpenBao(r *gin.Engine) {
 	config := openbao.DefaultConfig()
 	config.Address = "http://openbao:8200/"
 
@@ -25,131 +20,128 @@ func OpenBao(r *gin.Engine, db *gorm.DB) {
 		log.Fatalf("unable to initialize OpenBao client: %v", err)
 	}
 
-	err = authUserPass(client)
-	if err != nil {
-		log.Fatalf("unable to authenticate with userpass: %v", err)
+	username := os.Getenv("OPENBAO_USERNAME")
+	password := os.Getenv("OPENBAO_PASSWORD")
+	if username == "" || password == "" {
+		log.Fatalf("OPENBAO_USERNAME and OPENBAO_PASSWORD are required")
 	}
 
-	r.GET("/key/list", func(c *gin.Context) {
-		var requests []models.Request
+	if err := authUserPass(client, username, password); err != nil {
+		log.Fatalf("unable to authenticate: %v", err)
+	}
 
-		creatorID := "058f1f46-8a10-4887-a185-29938ab8c3cb"
+	go startTokenRefresher(client, username, password, 50*time.Minute)
 
-		if err := db.Where("creator = ?", creatorID).Find(&requests).Error; err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+	r.GET("/secret/list", func(c *gin.Context) {
+		userClaims, exists := c.Get("user")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		user := userClaims.(UserClaims)
+		userID := user.Sub
+
+		path := fmt.Sprintf("secrets/detailed-metadata/users/%s/", userID)
+		secret, err := client.Logical().List(path)
+		if err != nil || secret == nil || secret.Data == nil {
+			c.JSON(http.StatusOK, []interface{}{})
 			return
 		}
 
-		c.JSON(200, requests)
+		keyInfoRaw, ok := secret.Data["key_info"].(map[string]interface{})
+		if !ok {
+			c.JSON(http.StatusOK, []interface{}{})
+			return
+		}
+
+		keys := []map[string]interface{}{}
+		for keyID, info := range keyInfoRaw {
+			infoMap := info.(map[string]interface{})
+			customMeta := map[string]interface{}{}
+			if cm, exists := infoMap["custom_metadata"].(map[string]interface{}); exists {
+				customMeta = cm
+			}
+
+			expire := ""
+			if dt, exists := infoMap["delete_version_after"].(string); exists {
+				expire = dt
+			}
+
+			keys = append(keys, map[string]interface{}{
+				"id":          keyID,
+				"description": customMeta["description"],
+				"expire_at":   expire,
+			})
+		}
+
+		c.JSON(http.StatusOK, keys)
 	})
 
-	// GET /key/get?username=testuser&secret_name=mysecret
-	r.GET("/key/get", func(c *gin.Context) {
-		username := c.Query("username")
-		secretName := c.Query("secret_name")
-
-		if username == "" || secretName == "" {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "missing query params: username and secret_name are required",
-			})
+	r.GET("/secret/:name", func(c *gin.Context) {
+		userClaims, exists := c.Get("user")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}
+		user := userClaims.(UserClaims)
+		userID := user.Sub
+		keyID := c.Param("name")
 
-		path := fmt.Sprintf("secrets/data/users/%s/%s", username, secretName)
-
+		path := fmt.Sprintf("secrets/data/users/%s/%s", userID, keyID)
 		secret, err := client.Logical().Read(path)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error":   "failed to read key",
-				"details": err.Error(),
-			})
-			return
-		}
-
-		if secret == nil {
+		if err != nil || secret == nil || secret.Data == nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "key not found"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"username":    username,
-			"secret_name": secretName,
-			"path":        path,
-			"data":        secret.Data,
-			"wrap":        secret.WrapInfo,
-			"lease":       secret.LeaseDuration,
-			"renew":       secret.Renewable,
-			"auth":        secret.Auth,
-		})
-	})
-
-	// POST /key/set?username=testuser&secret_name=mysecret
-	r.POST("/key/set", func(c *gin.Context) {
-		username := c.Query("username")
-		secretName := c.Query("secret_name")
-
-		if username == "" || secretName == "" {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "missing query params: username and secret_name are required",
-			})
+		data, ok := secret.Data["data"].(map[string]interface{})
+		if !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid key data"})
 			return
 		}
 
-		var secretData map[string]interface{}
-		if err := c.BindJSON(&secretData); err != nil {
+		c.JSON(http.StatusOK, data)
+	})
+
+	r.POST("/secret/:name", func(c *gin.Context) {
+		userClaims, exists := c.Get("user")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		user := userClaims.(UserClaims)
+		userID := user.Sub
+		keyID := c.Param("name")
+
+		var req struct {
+			Data     map[string]interface{} `json:"data"`
+			Metadata map[string]interface{} `json:"metadata"`
+		}
+
+		if err := c.BindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		path := fmt.Sprintf("secrets/data/users/%s/%s", username, secretName)
-
-		data := map[string]interface{}{
-			"data": secretData,
-		}
-
-		_, err := client.Logical().Write(path, data)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error":   "failed to write key",
-				"details": err.Error(),
-			})
+		dataPath := fmt.Sprintf("secrets/data/users/%s/%s", userID, keyID)
+		if _, err := client.Logical().Write(dataPath, map[string]interface{}{"data": req.Data}); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save key data"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"message":     "Secret saved successfully",
-			"username":    username,
-			"secret_name": secretName,
-			"path":        path,
-		})
-	})
-
-	r.GET("/auth/status", func(c *gin.Context) {
-		secret, err := client.Logical().Read("auth/token/lookup-self")
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"authenticated": false,
-				"error":         err.Error(),
-			})
-			return
+		if req.Metadata != nil {
+			metaPath := fmt.Sprintf("secrets/metadata/users/%s/%s", userID, keyID)
+			if _, err := client.Logical().Write(metaPath, req.Metadata); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save key metadata"})
+				return
+			}
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"authenticated": true,
-			"token_info":    secret.Data,
-		})
+		c.Status(http.StatusNoContent)
 	})
 }
 
-func authUserPass(client *openbao.Client) error {
-
-	username := os.Getenv("OPENBAO_USERNAME")
-	password := os.Getenv("OPENBAO_PASSWORD")
-
-	if username == "" || password == "" {
-		return fmt.Errorf("OPENBAO_USERNAME and OPENBAO_PASSWORD environment variables are required")
-	}
-
+func authUserPass(client *openbao.Client, username, password string) error {
 	secret, err := client.Logical().Write("auth/userpass/login/"+username, map[string]interface{}{
 		"password": password,
 	})
@@ -159,9 +151,18 @@ func authUserPass(client *openbao.Client) error {
 	if secret == nil || secret.Auth == nil {
 		return fmt.Errorf("authentication failed: no auth info returned")
 	}
-
-	// токен
 	client.SetToken(secret.Auth.ClientToken)
 	log.Printf("Successfully authenticated as user: %s", username)
 	return nil
+}
+
+func startTokenRefresher(client *openbao.Client, username, password string, interval time.Duration) {
+	for {
+		time.Sleep(interval)
+		if err := authUserPass(client, username, password); err != nil {
+			log.Printf("Failed to refresh token: %v", err)
+		} else {
+			log.Println("Token refreshed successfully")
+		}
+	}
 }
