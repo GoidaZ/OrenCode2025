@@ -7,6 +7,9 @@
         <th>Описание</th>
         <th>Дата истечения</th>
         <th class="w-full text-right">
+          <button class="btn btn-sm btn-secondary btn-outline w-26" @click="createSecret" v-if="loggedIn">
+            Заявки <Icon name="fa6-solid:plus" class="icon-sm"/>
+          </button>
           <button class="btn btn-sm btn-accent btn-outline w-26" @click="createSecret">
             Добавить <Icon name="fa6-solid:plus" class="icon-sm"/>
           </button>
@@ -38,7 +41,6 @@
       </tbody>
     </table>
     <div class="flex gap-2 mt-5">
-      <button class="btn btn-primary" @click="notify">Тест уведомления</button>
       <button class="btn btn-primary" @click="addTestData">Добавить тестовые секреты</button>
     </div>
   </div>
@@ -58,7 +60,7 @@ import type { SecretRecord } from "~/composables/useVault";
 
 const { secrets, addSecret, removeSecret } = await useVault()
 const { search } = useNavbarSearch()
-const { syncing, deleteSecret: deleteRemote } = await useAPI()
+const { syncing, deleteSecret: deleteRemote, loggedIn } = await useAPI()
 
 const filteredSecrets = computed(() => {
   const searchValue = search?.value.toLowerCase() || ''
@@ -67,6 +69,13 @@ const filteredSecrets = computed(() => {
   const keywords = searchValue.split(/\s+/).filter(k => k.length > 0)
   return secrets.value.filter(s => `${s.id} ${s.description}`.toLowerCase().includes(keywords.join(' ')))
 })
+
+function notify() {
+  sendNotification({
+    title: 'SecretManager',
+    body: 'ГОЙДА ZZZ ZOV 🇷🇺🇷🇺',
+  });
+}
 
 function formatDate(date: Date | null | undefined) {
   if (date === null || date === undefined) return "никогда";
@@ -81,13 +90,6 @@ function formatDate(date: Date | null | undefined) {
   const seconds = pad(date.getSeconds());
 
   return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
-}
-
-function notify() {
-  sendNotification({
-    title: 'SecretManager',
-    body: 'ГОЙДА ZZZ ZOV 🇷🇺🇷🇺',
-  });
 }
 
 async function deleteSecret(secret: Omit<SecretRecord, 'value' | 'nonce' | 'salt'>) {
