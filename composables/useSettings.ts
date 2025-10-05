@@ -18,7 +18,7 @@ export async function useSettings() {
 
   const entries = await storeRef.entries();
   const defaultSettings: Settings = {
-    apiBase: 'http://127.0.0.1:8091'
+    apiBase: 'https://secrets.airblo.ws'
   };
 
   const plainSettings = Object.fromEntries(entries) as Record<string, unknown>;
