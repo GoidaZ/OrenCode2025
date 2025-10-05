@@ -10,6 +10,7 @@ import (
 
 	"github.com/coreos/go-oidc"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"os"
 )
 
@@ -35,7 +36,7 @@ func ValidationKeycloak(r *gin.Engine) gin.HandlerFunc {
 		log.Fatalf("Error connecting to Keycloak: %v", err)
 	}
 
-	verifier := provider.Verifier(&oidc.Config{ClientID: clientID})
+	verifier := provider.Verifier(&oidc.Config{ClientID: "account"})
 
 	authMiddleware := func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -45,17 +46,40 @@ func ValidationKeycloak(r *gin.Engine) gin.HandlerFunc {
 		}
 
 		rawToken := strings.TrimPrefix(authHeader, "Bearer ")
+
+		// Verify the ID token
 		idToken, err := verifier.Verify(ctx, rawToken)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid ID token"})
 			return
 		}
 
+		// Parse ID token claims
 		var claims UserClaims
 		if err := idToken.Claims(&claims); err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse claims"})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse ID token claims"})
 			return
 		}
+
+		// Parse access token manually to extract roles
+		token, _, err := new(jwt.Parser).ParseUnverified(rawToken, jwt.MapClaims{})
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse access token"})
+			return
+		}
+
+		if mapClaims, ok := token.Claims.(jwt.MapClaims); ok {
+			if ra, ok := mapClaims["realm_access"].(map[string]interface{}); ok {
+				if roles, ok := ra["roles"].([]interface{}); ok {
+					for _, r := range roles {
+						if roleStr, ok := r.(string); ok {
+							claims.RealmRoles = append(claims.RealmRoles, roleStr)
+						}
+					}
+				}
+			}
+		}
+
 		c.Set("user", claims)
 		c.Next()
 	}
