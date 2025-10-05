@@ -42,6 +42,12 @@
       <button class="btn btn-primary" @click="addTestData">Добавить тестовые секреты</button>
     </div>
   </div>
+  <div class="toast toast-end">
+    <div role="alert" class="alert alert-soft" v-if="syncing">
+      <span class="loading loading-spinner loading-md"></span>
+      Синхронизация...
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -50,8 +56,9 @@ import { sendNotification } from '@tauri-apps/plugin-notification';
 import { ask } from '@tauri-apps/plugin-dialog';
 import type { SecretRecord } from "~/composables/useVault";
 
-const { secrets, addSecret, removeSecret } = await useVault();
+const { secrets, addSecret, removeSecret } = await useVault()
 const { search } = useNavbarSearch()
+const { syncing } = await useAPI()
 
 const filteredSecrets = computed(() => {
   const searchValue = search?.value.toLowerCase() || ''

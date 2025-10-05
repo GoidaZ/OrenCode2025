@@ -257,6 +257,7 @@ export default async function useVault() {
   }
 
   return {
+    key,
     unlock,
     lock,
     reset,

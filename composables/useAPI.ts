@@ -59,12 +59,16 @@ export async function useAPI() {
   const { settings } = await useSettings();
   const vault = await useVault();
 
+  const syncing = ref(false);
   const loggedIn = ref(!!settings.user);
   const user = reactive<UserInfo>({});
 
   let refreshTimer: number | null = null;
+  let syncTimer: number | null = null;
 
   await listen('reset', async (event) => logout());
+
+  startSync();
 
   async function login() {
     const port = await start();
@@ -151,6 +155,7 @@ export async function useAPI() {
   async function saveUser() {
     settings.user = await vault.simpleEncrypt(JSON.stringify(user));
     loggedIn.value = true;
+    forceSync();
   }
 
   async function refreshToken() {
@@ -266,7 +271,76 @@ export async function useAPI() {
     }
   }
 
+  async function syncSecrets() {
+    if (!loggedIn.value) return;
+    if (!user.tokens?.access_token) return;
+    if (!vault.key.value) return;
+
+    syncing.value = true;
+
+    try {
+      console.log('Starting sync...');
+
+      const localSecrets: Record<string, Record<string, any>> = {};
+      for (const secretMeta of vault.secrets.value) {
+        const value = await vault.getSecret(secretMeta.id);
+        if (value) {
+          localSecrets[secretMeta.id] = value;
+        }
+      }
+
+      const remoteSecrets = await listSecrets();
+      const remoteSecretIds = remoteSecrets.map(s => s.id);
+
+      for (const remoteSecret of remoteSecrets) {
+        if (!(remoteSecret.id in localSecrets)) {
+          console.info(`Pulling secret ${remoteSecret.id} from remote`);
+          const value = await getSecret(remoteSecret.id);
+          if (value) {
+            await vault.addSecret(remoteSecret.id, remoteSecret.description || '', value);
+          }
+        }
+      }
+
+      for (const [id, value] of Object.entries(localSecrets)) {
+        if (!remoteSecretIds.includes(id)) {
+          console.info(`Pushing secret ${id} to remote`);
+          await createSecret(id, { data: value, description: 'Synced from local' });
+        }
+      }
+
+      console.log('Sync finished.');
+    } catch (err) {
+      console.error('syncSecrets failed:', err);
+    } finally {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      syncing.value = false;
+    }
+  }
+
+  function startSync() {
+    stopSync();
+    syncTimer = window.setInterval(syncSecrets, 30_000);
+    syncSecrets();
+  }
+
+  function stopSync() {
+    if (syncTimer) {
+      clearInterval(syncTimer);
+      syncTimer = null;
+      syncing.value = false;
+    }
+  }
+
+  async function forceSync() {
+    console.log("force sync!!")
+    if (syncing.value) return;
+    stopSync();
+    startSync();
+  }
+
   authState = {
+    syncing,
     loggedIn,
     user,
     unlock,

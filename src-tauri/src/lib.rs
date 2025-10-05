@@ -1,7 +1,6 @@
 use tauri::{Manager, RunEvent};
 use tauri_plugin_log::log;
 use tauri_plugin_sql::{Migration, MigrationKind};
-use tauri_plugin_oauth::start;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
