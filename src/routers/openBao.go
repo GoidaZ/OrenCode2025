@@ -149,6 +149,25 @@ func OpenBao(r *gin.Engine, db *gorm.DB) {
 
 		c.Status(http.StatusNoContent)
 	})
+
+	r.DELETE("/secret/:name", func(c *gin.Context) {
+		userClaims, exists := c.Get("user")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		user := userClaims.(UserClaims)
+		userID := user.Sub
+		keyID := c.Param("name")
+
+		metaPath := fmt.Sprintf("secrets/metadata/users/%s/%s", userID, keyID)
+		if _, err := client.Logical().Delete(metaPath); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete secret metadata"})
+			return
+		}
+
+		c.Status(http.StatusNoContent)
+	})
 }
 
 func authUserPass(client *openbao.Client, username, password string) error {
