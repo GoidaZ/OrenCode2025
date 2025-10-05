@@ -194,7 +194,7 @@ export async function useAPI() {
   }
 
   async function listSecrets(): Promise<KeyInfo[]> {
-    if (!user.tokens?.access_token) throw new Error("login first");
+    if (!user.tokens?.access_token) return [];
 
     try {
       return await $fetch<KeyInfo[]>(`${settings.apiBase}/api/secret/list`, {
@@ -207,7 +207,7 @@ export async function useAPI() {
   }
 
   async function getSecret(name: string): Promise<SecretData | null> {
-    if (!user.tokens?.access_token) throw new Error("login first");
+    if (!user.tokens?.access_token) return null;
 
     try {
       return await $fetch<SecretData>(`${settings.apiBase}/api/secret/${encodeURIComponent(name)}`, {
@@ -220,7 +220,7 @@ export async function useAPI() {
   }
 
   async function createSecret(name: string, body: SecretWriteRequest): Promise<void> {
-    if (!user.tokens?.access_token) throw new Error("login first");
+    if (!user.tokens?.access_token) return;
 
     try {
       await $fetch(`${settings.apiBase}/api/secret/${encodeURIComponent(name)}`, {
@@ -232,7 +232,7 @@ export async function useAPI() {
   }
 
   async function deleteSecret(name: string): Promise<void> {
-    if (!user.tokens?.access_token) throw new Error("login first");
+    if (!user.tokens?.access_token) return;
 
     try {
       await $fetch(`${settings.apiBase}/api/secret/${encodeURIComponent(name)}`, {
