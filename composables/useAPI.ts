@@ -68,7 +68,7 @@ export async function useAPI() {
     if (import.meta.env.DEV) {
       return 'http://127.0.0.1:3001/callback';
     }
-    return 'tauri://callback';
+    return `${settings.apiBase}/api/auth/redirect`;
   }
 
   function getAuthURL() {
