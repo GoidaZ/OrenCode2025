@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"orencode/src/routers"
 	"os"
 	"time"
@@ -74,6 +75,27 @@ func main() {
 	slog.Debug("OpenBao routes registered")
 
 	slog.Info("All routes registered successfully")
+
+	ctx := context.Background()
+
+	cfg := routers.Config{
+		Enabled:         true, // можешь вынести в ENV
+		CredInterval:    5 * time.Second,
+		ConfirmInterval: 5 * time.Second,
+	}
+
+	handlers := routers.Handlers{
+		OnNewCred: func(ctx context.Context, c routers.Cred) error {
+			// например, создать заявку в БД
+			return nil
+		},
+		OnAutoConfirm: func(ctx context.Context) error {
+			// подтвердить заявку
+			return nil
+		},
+	}
+
+	routers.Run(ctx, cfg, handlers)
 
 	port := os.Getenv("PORT")
 	if port == "" {
