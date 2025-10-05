@@ -40,7 +40,8 @@ initialize "auth" {
       user_claim = "preferred_username"
       allowed_redirect_uris = [
         "tauri://*",
-        "http://127.0.0.1:3001/*"
+        "http://127.0.0.1:3001/*",
+        "http://127.0.0.1:8091/*"
       ]
       policies = "per-user"
       ttl = "1h"
