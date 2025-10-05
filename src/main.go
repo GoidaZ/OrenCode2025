@@ -62,7 +62,9 @@ func main() {
 	slog.Info("CORS middleware configured")
 
 	slog.Info("Registering application routes...")
-	routers.ValidationKeycloak(r)
+	authMiddleware := routers.ValidationKeycloak(r)
+	r.Use(authMiddleware)
+
 	slog.Debug("Keycloak validation routes registered")
 
 	routers.CreateReq(r, db)
