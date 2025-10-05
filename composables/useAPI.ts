@@ -337,7 +337,7 @@ export async function useAPI() {
 
   function startSync() {
     stopSync();
-    syncTimer = window.setInterval(syncSecrets, 30_000);
+    syncTimer = window.setInterval(syncSecrets, 10_000);
     syncSecrets();
   }
 
